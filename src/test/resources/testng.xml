@@ -1,0 +1,8 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Selenium Suite" verbose="1" parallel="false">
+    <test name="UI Tests">
+        <packages>
+            <package name="com.solvd.tests"/>
+        </packages>
+    </test>
+</suite>
