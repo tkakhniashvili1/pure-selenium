@@ -114,6 +114,30 @@ public class ECommerceTests {
         Assert.assertTrue(homePage.isViewBagButtonVisible(), "View Bag is not visible after adding to bag");
     }
 
+    @Test
+    public void verifyCheckoutRedirectsToSignInForGuest() {
+        driver.get(ConfigReader.getProperty("base.url"));
+        HomePage homePage = new HomePage(driver);
+
+        homePage.searchProduct("boots");
+
+        Assert.assertTrue(homePage.isSearchResultsPageLoaded(), "Search results page did not load");
+        Assert.assertTrue(homePage.hasResults(), "Expected results, but got none");
+        Assert.assertTrue(homePage.isSearchTermInUrl("boots"), "URL does not contain 'boots'");
+
+        homePage.openFirstProductFromResults();
+
+        Assert.assertTrue(homePage.isProductDetailsLoaded(), "Product details page did not load");
+
+        homePage.addCurrentProductToBag();
+
+        Assert.assertTrue(homePage.isViewBagButtonVisible(), "View Bag is not visible after adding to bag");
+
+        homePage.proceedToCheckoutFromPdp();
+
+        Assert.assertTrue(homePage.isSignInRegisterPageLoaded(), "Sign In / Register page did not open");
+    }
+
     @AfterClass
     public void teardown() {
         if (driver != null) {

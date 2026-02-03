@@ -13,7 +13,7 @@ import java.util.List;
 public class HomePage {
 
     protected WebDriver driver;
-    private WebDriverWait wait;
+    private final WebDriverWait wait;
 
     @FindBy(id = "onetrust-accept-btn-handler")
     private WebElement acceptCookiesButton;
@@ -24,16 +24,16 @@ public class HomePage {
     @FindBy(id = "header-big-screen-search-box")
     private WebElement searchBar;
 
-    @FindBy(xpath = "//*[@data-testid='plp-results-title']")
+    @FindBy(css = "[data-testid='plp-results-title']")
     private WebElement resultsTitle;
 
-    @FindBy(xpath = "//*[@data-testid='plp-no-results-text']")
+    @FindBy(css = "[data-testid='plp-no-results-text']")
     private WebElement noResultsText;
 
-    @FindBy(xpath = "//*[@data-testid='product_summary_title']")
+    @FindBy(css = "[data-testid='product_summary_title']")
     private List<WebElement> productTitleLabels;
 
-    @FindBy(xpath = "//*[@data-testid='meganav-primarynav-link-women']")
+    @FindBy(css = "[data-testid='meganav-primarynav-link-women']")
     private WebElement womenCategoryFilter;
 
     @FindBy(xpath = "//*[contains(@class, 'header-w2hs3w') and normalize-space(text())='All Dresses']")
@@ -41,6 +41,18 @@ public class HomePage {
 
     @FindBy(xpath = "//*[@data-testid='search-banner-image-chip' and .//*[normalize-space(text())='Black']]")
     private WebElement dressBlackFilter;
+
+    @FindBy(css = "[data-testid='item-form-addToBag-button']")
+    private WebElement addToBagButton;
+
+    @FindBy(xpath = "//*[self::a or self::button][contains(translate(normalize-space(.),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'view bag')]")
+    private WebElement viewBagButton;
+
+    @FindBy(xpath = "//*[self::button or self::a][contains(translate(normalize-space(.),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'checkout')]")
+    private WebElement checkoutButton;
+
+    @FindBy(xpath = "//*[contains(translate(normalize-space(.),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'sign in') and contains(translate(normalize-space(.),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'register')]")
+    private WebElement signInRegisterTitle;
 
     @FindBy(css = "h1")
     private WebElement pdpTitle;
@@ -52,24 +64,16 @@ public class HomePage {
         PageFactory.initElements(driver, this);
     }
 
-    private void clickIfVisible(WebElement element) {
-        try {
-            wait.until(ExpectedConditions.elementToBeClickable(element)).click();
-        } catch (TimeoutException | NoSuchElementException ignored) {
-        }
-    }
-
     public void acceptCookiesIfPresent() {
-        clickIfVisible(acceptCookiesButton);
+        clickIfPresent(acceptCookiesButton);
     }
 
     public void dismissCountryPopupIfPresent() {
-        clickIfVisible(closeCountryPopupButton);
+        clickIfPresent(closeCountryPopupButton);
     }
 
     public void searchProduct(String productName) {
-        acceptCookiesIfPresent();
-        dismissCountryPopupIfPresent();
+        handlePopups();
 
         String beforeUrl = driver.getCurrentUrl();
 
@@ -102,10 +106,11 @@ public class HomePage {
     }
 
     public boolean isProductWithTitle(String text) {
+        String needle = text.toLowerCase();
         return productTitleLabels.stream()
                 .map(WebElement::getText)
                 .map(String::toLowerCase)
-                .anyMatch(title -> title.contains(text.toLowerCase()));
+                .anyMatch(title -> title.contains(needle));
     }
 
     public boolean isSearchTermInUrl(String keyword) {
@@ -113,24 +118,26 @@ public class HomePage {
     }
 
     public void applyWomenDressesFilters() {
-        acceptCookiesIfPresent();
-        dismissCountryPopupIfPresent();
-
-        wait.until(ExpectedConditions.elementToBeClickable(womenCategoryFilter)).click();
-        wait.until(ExpectedConditions.elementToBeClickable(allDressesSubcategoryFilter)).click();
-        wait.until(ExpectedConditions.elementToBeClickable(dressBlackFilter)).click();
+        handlePopups();
+        click(womenCategoryFilter);
+        click(allDressesSubcategoryFilter);
+        click(dressBlackFilter);
     }
 
     public boolean areFirstProductsBlackDresses() {
+        int limit = Math.min(10, productTitleLabels.size());
+        if (limit == 0) return false;
+
         String[] dressKeywords = {"dress", "kaftan", "skirt", "gown", "tunic"};
         String[] blackKeywords = {"black", "jet", "charcoal"};
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < limit; i++) {
             WebElement product = productTitleLabels.get(i);
 
-            String fullTitle = (product.getAttribute("data-label") + " " +
-                    product.getAttribute("data-desc") + " " +
-                    product.getAttribute("title")).toLowerCase();
+            String fullTitle = (safeAttr(product, "data-label") + " " +
+                    safeAttr(product, "data-desc") + " " +
+                    safeAttr(product, "title") + " " +
+                    product.getText()).toLowerCase();
 
             boolean isDress = false;
             for (String keyword : dressKeywords) {
@@ -155,18 +162,16 @@ public class HomePage {
     }
 
     public void openFirstProductFromResults() {
-        acceptCookiesIfPresent();
-        dismissCountryPopupIfPresent();
-
-        wait.until(d -> productTitleLabels != null && productTitleLabels.size() > 0);
-        wait.until(ExpectedConditions.elementToBeClickable(productTitleLabels.get(0))).click();
+        handlePopups();
+        wait.until(d -> productTitleLabels != null && !productTitleLabels.isEmpty());
+        click(productTitleLabels.get(0));
     }
 
     public boolean isProductDetailsLoaded() {
         try {
             wait.until(ExpectedConditions.visibilityOf(pdpTitle));
             return pdpTitle.isDisplayed() && !pdpTitle.getText().trim().isEmpty();
-        } catch (TimeoutException | NoSuchElementException e) {
+        } catch (TimeoutException | NoSuchElementException | StaleElementReferenceException e) {
             return false;
         }
     }
@@ -181,46 +186,10 @@ public class HomePage {
         }
     }
 
-    @FindBy(xpath = "//*[@data-testid='item-form-addToBag-button']")
-    private WebElement addToBagButton;
-
-    @FindBy(xpath = "//*[self::a or self::button][contains(translate(normalize-space(.),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'view bag')]")
-    private WebElement viewBagButton;
-
-    private void safeClick(WebElement element) {
-        wait.until(ExpectedConditions.visibilityOf(element));
-        ((JavascriptExecutor) driver).executeScript(
-                "arguments[0].scrollIntoView({block:'center', inline:'nearest'});", element
-        );
-        try {
-            wait.until(ExpectedConditions.elementToBeClickable(element)).click();
-        } catch (ElementClickInterceptedException e) {
-            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
-        }
-    }
-
-    private void selectRandomSizeFromDropdownIfPresent() {
-        try {
-            WebElement chooseSize = driver.findElement(By.xpath(
-                    "//*[(@role='combobox' or @aria-haspopup='listbox') and " +
-                            "contains(translate(normalize-space(.),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'choose size')]"
-            ));
-            safeClick(chooseSize);
-
-            wait.until(d -> !driver.findElements(By.cssSelector("li[role='option'][data-value]")).isEmpty());
-            List<WebElement> options = driver.findElements(By.cssSelector("li[role='option'][data-value]"));
-
-            safeClick(options.get((int) (Math.random() * options.size())));
-        } catch (Exception ignored) {
-        }
-    }
-
     public void addCurrentProductToBag() {
-        acceptCookiesIfPresent();
-        dismissCountryPopupIfPresent();
-
+        handlePopups();
         selectRandomSizeFromDropdownIfPresent();
-        safeClick(addToBagButton);
+        click(addToBagButton);
     }
 
     public boolean isViewBagButtonVisible() {
@@ -230,5 +199,64 @@ public class HomePage {
         } catch (TimeoutException | NoSuchElementException | StaleElementReferenceException e) {
             return false;
         }
+    }
+
+    public void proceedToCheckoutFromPdp() {
+        click(viewBagButton);
+        click(checkoutButton);
+    }
+
+    public boolean isSignInRegisterPageLoaded() {
+        try {
+            wait.until(ExpectedConditions.visibilityOf(signInRegisterTitle));
+            return signInRegisterTitle.isDisplayed();
+        } catch (TimeoutException | NoSuchElementException | StaleElementReferenceException e) {
+            return false;
+        }
+    }
+
+    private void handlePopups() {
+        clickIfPresent(acceptCookiesButton);
+        clickIfPresent(closeCountryPopupButton);
+    }
+
+    private void click(WebElement element) {
+        wait.until(ExpectedConditions.visibilityOf(element));
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].scrollIntoView({block:'center', inline:'nearest'});", element
+        );
+        try {
+            wait.until(ExpectedConditions.elementToBeClickable(element)).click();
+        } catch (ElementNotInteractableException e) {
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+        }
+    }
+
+    private void clickIfPresent(WebElement element) {
+        try {
+            click(element);
+        } catch (TimeoutException | NoSuchElementException | StaleElementReferenceException ignored) {
+        }
+    }
+
+    private void selectRandomSizeFromDropdownIfPresent() {
+        try {
+            WebElement chooseSize = driver.findElement(By.xpath(
+                    "//*[(@role='combobox' or @aria-haspopup='listbox') and " +
+                            "contains(translate(normalize-space(.),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'choose size')]"
+            ));
+            click(chooseSize);
+
+            wait.until(d -> !d.findElements(By.cssSelector("li[role='option'][data-value]")).isEmpty());
+            List<WebElement> options = driver.findElements(By.cssSelector("li[role='option'][data-value]"));
+
+            click(options.get((int) (Math.random() * options.size())));
+        } catch (Exception ignored) {
+        }
+    }
+
+    private String safeAttr(WebElement el, String attr) {
+        String v = el.getAttribute(attr);
+        return v == null ? "" : v;
     }
 }
