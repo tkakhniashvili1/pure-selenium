@@ -13,12 +13,13 @@ import java.util.List;
 public class HomePage {
 
     protected WebDriver driver;
+    private WebDriverWait wait;
 
     @FindBy(id = "onetrust-accept-btn-handler")
-    private WebElement acceptCookiesBtn;
+    private WebElement acceptCookiesButton;
 
     @FindBy(css = ".change-country-close")
-    private WebElement closeCountryPopupBtn;
+    private WebElement closeCountryPopupButton;
 
     @FindBy(id = "header-big-screen-search-box")
     private WebElement searchBar;
@@ -30,49 +31,64 @@ public class HomePage {
     private WebElement noResultsText;
 
     @FindBy(xpath = "//*[@data-testid='product_summary_title']")
-    private List<WebElement> productTitles;
+    private List<WebElement> productTitleLabels;
+
+    @FindBy(xpath = "//*[@data-testid='meganav-primarynav-link-women']")
+    private WebElement womenCategoryFilter;
+
+    @FindBy(xpath = "//*[contains(@class, 'header-w2hs3w') and normalize-space(text())='All Dresses']")
+    private WebElement allDressesSubcategoryFilter;
+
+    @FindBy(xpath = "//*[@data-testid='search-banner-image-chip' and .//*[normalize-space(text())='Black']]")
+    private WebElement dressBlackFilter;
+
+    @FindBy(css = "h1")
+    private WebElement pdpTitle;
 
     public HomePage(WebDriver driver) {
         this.driver = driver;
+        this.wait = new WebDriverWait(driver,
+                Duration.ofSeconds(Integer.parseInt(ConfigReader.getProperty("implicit.wait"))));
         PageFactory.initElements(driver, this);
     }
 
-    public void acceptCookiesIfPresent() {
+    private void clickIfVisible(WebElement element) {
         try {
-            WebDriverWait wait = new WebDriverWait(driver,
-                    Duration.ofSeconds(Integer.parseInt(ConfigReader.getProperty("implicit.wait"))));
-            wait.until(ExpectedConditions.elementToBeClickable(acceptCookiesBtn));
-            acceptCookiesBtn.click();
+            wait.until(ExpectedConditions.elementToBeClickable(element)).click();
         } catch (TimeoutException | NoSuchElementException ignored) {
         }
     }
 
+    public void acceptCookiesIfPresent() {
+        clickIfVisible(acceptCookiesButton);
+    }
+
     public void dismissCountryPopupIfPresent() {
-        try {
-            WebDriverWait wait = new WebDriverWait(driver,
-                    Duration.ofSeconds(Integer.parseInt(ConfigReader.getProperty("implicit.wait"))));
-            wait.until(ExpectedConditions.elementToBeClickable(closeCountryPopupBtn));
-            closeCountryPopupBtn.click();
-        } catch (TimeoutException | NoSuchElementException ignored) {
-        }
+        clickIfVisible(closeCountryPopupButton);
     }
 
     public void searchProduct(String productName) {
         acceptCookiesIfPresent();
         dismissCountryPopupIfPresent();
-        WebDriverWait wait = new WebDriverWait(driver,
-                Duration.ofSeconds(Integer.parseInt(ConfigReader.getProperty("implicit.wait"))));
-        wait.until(ExpectedConditions.visibilityOf(searchBar));
+
+        String beforeUrl = driver.getCurrentUrl();
+
         wait.until(ExpectedConditions.elementToBeClickable(searchBar));
-        searchBar.clear();
+        searchBar.click();
+        searchBar.sendKeys(Keys.chord(Keys.CONTROL, "a"));
+        searchBar.sendKeys(Keys.BACK_SPACE);
+
         searchBar.sendKeys(productName);
         searchBar.sendKeys(Keys.ENTER);
+
+        wait.until(ExpectedConditions.not(ExpectedConditions.urlToBe(beforeUrl)));
     }
 
     public boolean isSearchResultsPageLoaded() {
         try {
+            wait.until(ExpectedConditions.visibilityOf(resultsTitle));
             return resultsTitle.isDisplayed();
-        } catch (NoSuchElementException e) {
+        } catch (TimeoutException | NoSuchElementException | StaleElementReferenceException e) {
             return false;
         }
     }
@@ -85,14 +101,73 @@ public class HomePage {
         }
     }
 
-    public boolean hasProductContaining(String keyword) {
-        String lowerKeyword = keyword.toLowerCase();
-        return productTitles.stream()
+    public boolean isProductWithTitle(String text) {
+        return productTitleLabels.stream()
                 .map(WebElement::getText)
-                .anyMatch(title -> title.toLowerCase().contains(lowerKeyword));
+                .map(String::toLowerCase)
+                .anyMatch(title -> title.contains(text.toLowerCase()));
     }
 
     public boolean isSearchTermInUrl(String keyword) {
         return driver.getCurrentUrl().toLowerCase().contains(keyword.toLowerCase());
+    }
+
+    public void applyWomenDressesFilters() {
+        acceptCookiesIfPresent();
+        dismissCountryPopupIfPresent();
+
+        wait.until(ExpectedConditions.elementToBeClickable(womenCategoryFilter)).click();
+        wait.until(ExpectedConditions.elementToBeClickable(allDressesSubcategoryFilter)).click();
+        wait.until(ExpectedConditions.elementToBeClickable(dressBlackFilter)).click();
+    }
+
+    public boolean areFirstProductsBlackDresses() {
+        String[] dressKeywords = {"dress", "kaftan", "skirt", "gown", "tunic"};
+        String[] blackKeywords = {"black", "jet", "charcoal"};
+
+        for (int i = 0; i < 10; i++) {
+            WebElement product = productTitleLabels.get(i);
+
+            String fullTitle = (product.getAttribute("data-label") + " " +
+                    product.getAttribute("data-desc") + " " +
+                    product.getAttribute("title")).toLowerCase();
+
+            boolean isDress = false;
+            for (String keyword : dressKeywords) {
+                if (fullTitle.contains(keyword)) {
+                    isDress = true;
+                    break;
+                }
+            }
+            if (!isDress) return false;
+
+            boolean isBlack = false;
+            for (String keyword : blackKeywords) {
+                if (fullTitle.contains(keyword)) {
+                    isBlack = true;
+                    break;
+                }
+            }
+            if (!isBlack) return false;
+        }
+
+        return true;
+    }
+
+    public void openFirstProductFromResults() {
+        acceptCookiesIfPresent();
+        dismissCountryPopupIfPresent();
+
+        wait.until(d -> productTitleLabels != null && productTitleLabels.size() > 0);
+        wait.until(ExpectedConditions.elementToBeClickable(productTitleLabels.get(0))).click();
+    }
+
+    public boolean isProductDetailsLoaded() {
+        try {
+            wait.until(ExpectedConditions.visibilityOf(pdpTitle));
+            return pdpTitle.isDisplayed() && !pdpTitle.getText().trim().isEmpty();
+        } catch (TimeoutException | NoSuchElementException e) {
+            return false;
+        }
     }
 }

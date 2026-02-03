@@ -42,18 +42,42 @@ public class ECommerceTests {
     }
 
     @Test
-    public void successfulProductSearch() {
+    public void verifyProductSearch() {
         driver.get(ConfigReader.getProperty("base.url"));
         HomePage homePage = new HomePage(driver);
 
-        homePage.acceptCookiesIfPresent();
-        homePage.dismissCountryPopupIfPresent();
         homePage.searchProduct("dress");
 
-        Assert.assertTrue(homePage.isSearchResultsPageLoaded());
-        Assert.assertTrue(homePage.hasResults());
-        Assert.assertTrue(homePage.isSearchTermInUrl("dress"));
-        Assert.assertTrue(homePage.hasProductContaining("dress"));
+        Assert.assertTrue(homePage.isSearchResultsPageLoaded(), "Search results page is not loaded.");
+        Assert.assertTrue(homePage.hasResults(), "No search results found.");
+        Assert.assertTrue(homePage.isSearchTermInUrl("dress"), "URL does not contain 'dress'.");
+        Assert.assertTrue(homePage.isProductWithTitle("dress"), "No product contains 'dress'.");
+    }
+
+    @Test
+    public void verifyWomenDressesFilteredByColor() {
+        driver.get(ConfigReader.getProperty("base.url"));
+        HomePage homePage = new HomePage(driver);
+
+        homePage.applyWomenDressesFilters();
+
+        Assert.assertTrue(homePage.hasResults(), "No products are displayed after applying filters");
+        Assert.assertTrue(homePage.areFirstProductsBlackDresses(), "Not all products are black dresses");
+    }
+
+    @Test
+    public void verifyFirstProductFromResultsNavigatesToPdp() {
+        driver.get(ConfigReader.getProperty("base.url"));
+        HomePage homePage = new HomePage(driver);
+
+        homePage.searchProduct("jeans");
+
+        Assert.assertTrue(homePage.isSearchResultsPageLoaded(), "Search results page did not load");
+        Assert.assertTrue(homePage.hasResults(), "Expected results, but got none");
+
+        homePage.openFirstProductFromResults();
+
+        Assert.assertTrue(homePage.isProductDetailsLoaded(), "Product details page did not load");
     }
 
     @AfterClass
