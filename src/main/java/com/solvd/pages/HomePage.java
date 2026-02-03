@@ -170,4 +170,14 @@ public class HomePage {
             return false;
         }
     }
+
+    public boolean isNoResultsTextContainsCountAndQuery(String query) {
+        try {
+            wait.until(ExpectedConditions.visibilityOf(noResultsText));
+            String text = noResultsText.getText().toLowerCase();
+            return text.contains("0") && text.contains("results") && text.contains(query.toLowerCase());
+        } catch (TimeoutException | NoSuchElementException | StaleElementReferenceException e) {
+            return false;
+        }
+    }
 }

@@ -80,6 +80,20 @@ public class ECommerceTests {
         Assert.assertTrue(homePage.isProductDetailsLoaded(), "Product details page did not load");
     }
 
+    @Test
+    public void verifyNoResultsMessageForInvalidSearch() {
+        driver.get(ConfigReader.getProperty("base.url"));
+        HomePage homePage = new HomePage(driver);
+
+        String query = "zzzzzzzzzz";
+        homePage.searchProduct(query);
+
+        Assert.assertTrue(homePage.isSearchResultsPageLoaded(), "Search results page is not loaded.");
+        Assert.assertFalse(homePage.hasResults(), "Expected no results, but results were found.");
+        Assert.assertTrue(homePage.isNoResultsTextContainsCountAndQuery(query),
+                "No results text does not contain expected count/query.");
+    }
+
     @AfterClass
     public void teardown() {
         if (driver != null) {
