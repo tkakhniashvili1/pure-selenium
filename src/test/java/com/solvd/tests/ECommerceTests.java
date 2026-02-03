@@ -94,6 +94,26 @@ public class ECommerceTests {
                 "No results text does not contain expected count/query.");
     }
 
+    @Test
+    public void verifyAddToBagFromPdp() {
+        driver.get(ConfigReader.getProperty("base.url"));
+        HomePage homePage = new HomePage(driver);
+
+        homePage.searchProduct("jeans");
+
+        Assert.assertTrue(homePage.isSearchResultsPageLoaded(), "Search results page did not load");
+        Assert.assertTrue(homePage.hasResults(), "Expected results, but got none");
+        Assert.assertTrue(homePage.isSearchTermInUrl("jeans"), "URL does not contain 'jeans'");
+
+        homePage.openFirstProductFromResults();
+
+        Assert.assertTrue(homePage.isProductDetailsLoaded(), "Product details page did not load");
+
+        homePage.addCurrentProductToBag();
+
+        Assert.assertTrue(homePage.isViewBagButtonVisible(), "View Bag is not visible after adding to bag");
+    }
+
     @AfterClass
     public void teardown() {
         if (driver != null) {

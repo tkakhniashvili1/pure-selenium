@@ -180,4 +180,55 @@ public class HomePage {
             return false;
         }
     }
+
+    @FindBy(xpath = "//*[@data-testid='item-form-addToBag-button']")
+    private WebElement addToBagButton;
+
+    @FindBy(xpath = "//*[self::a or self::button][contains(translate(normalize-space(.),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'view bag')]")
+    private WebElement viewBagButton;
+
+    private void safeClick(WebElement element) {
+        wait.until(ExpectedConditions.visibilityOf(element));
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].scrollIntoView({block:'center', inline:'nearest'});", element
+        );
+        try {
+            wait.until(ExpectedConditions.elementToBeClickable(element)).click();
+        } catch (ElementClickInterceptedException e) {
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+        }
+    }
+
+    private void selectRandomSizeFromDropdownIfPresent() {
+        try {
+            WebElement chooseSize = driver.findElement(By.xpath(
+                    "//*[(@role='combobox' or @aria-haspopup='listbox') and " +
+                            "contains(translate(normalize-space(.),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'choose size')]"
+            ));
+            safeClick(chooseSize);
+
+            wait.until(d -> !driver.findElements(By.cssSelector("li[role='option'][data-value]")).isEmpty());
+            List<WebElement> options = driver.findElements(By.cssSelector("li[role='option'][data-value]"));
+
+            safeClick(options.get((int) (Math.random() * options.size())));
+        } catch (Exception ignored) {
+        }
+    }
+
+    public void addCurrentProductToBag() {
+        acceptCookiesIfPresent();
+        dismissCountryPopupIfPresent();
+
+        selectRandomSizeFromDropdownIfPresent();
+        safeClick(addToBagButton);
+    }
+
+    public boolean isViewBagButtonVisible() {
+        try {
+            wait.until(ExpectedConditions.visibilityOf(viewBagButton));
+            return viewBagButton.isDisplayed();
+        } catch (TimeoutException | NoSuchElementException | StaleElementReferenceException e) {
+            return false;
+        }
+    }
 }
