@@ -33,16 +33,17 @@ public class ProductPage {
         PageFactory.initElements(driver, this);
     }
 
-    public void addCurrentProductToBag() {
-        selectRandomSizeFromDropdownIfPresent();
+    public void addCurrentProductToBag(String size) {
+        selectSizeFromDropdownIfPresent(size);
         click(driver, wait, addToBagButton);
     }
 
     public boolean isLoaded() {
         try {
-            wait.until(ExpectedConditions.visibilityOf(pdpTitle));
-            return pdpTitle.isDisplayed() && !pdpTitle.getText().trim().isEmpty();
-        } catch (TimeoutException e) {
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("h1")));
+            WebElement title = driver.findElement(By.cssSelector("h1"));
+            return title.isDisplayed() && !title.getText().trim().isEmpty();
+        } catch (TimeoutException | NoSuchElementException | StaleElementReferenceException e) {
             return false;
         }
     }
@@ -65,7 +66,7 @@ public class ProductPage {
         return isLoaded();
     }
 
-    private void selectRandomSizeFromDropdownIfPresent() {
+    private void selectSizeFromDropdownIfPresent(String size) {
         try {
             WebElement chooseSize = driver.findElement(
                     By.cssSelector("div[role='combobox'][aria-labelledby='size-input-label']")
@@ -86,8 +87,19 @@ public class ProductPage {
             wait.until(d -> !listbox.findElements(optionBy).isEmpty());
 
             List<WebElement> options = listbox.findElements(optionBy);
-            click(driver, wait, options.get((int) (Math.random() * options.size())));
+            click(driver, wait, findSizeOption(options, size));
         } catch (NoSuchElementException | TimeoutException ignored) {
         }
+    }
+
+    private WebElement findSizeOption(List<WebElement> options, String size) {
+        for (WebElement opt : options) {
+            String dataValue = opt.getAttribute("data-value");
+            String text = opt.getText();
+
+            if (dataValue != null && dataValue.trim().equalsIgnoreCase(size)) return opt;
+            if (text != null && text.trim().equalsIgnoreCase(size)) return opt;
+        }
+        throw new NoSuchElementException("Size option not found: " + size);
     }
 }
