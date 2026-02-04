@@ -64,14 +64,6 @@ public class HomePage {
         PageFactory.initElements(driver, this);
     }
 
-    public void acceptCookiesIfPresent() {
-        clickIfPresent(acceptCookiesButton);
-    }
-
-    public void dismissCountryPopupIfPresent() {
-        clickIfPresent(closeCountryPopupButton);
-    }
-
     public void searchProduct(String productName) {
         handlePopups();
 
