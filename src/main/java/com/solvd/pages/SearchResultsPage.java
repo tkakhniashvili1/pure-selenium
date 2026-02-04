@@ -111,9 +111,10 @@ public class SearchResultsPage {
         }
     }
 
-    public void openFirstProductFromResults() {
+    public ProductPage openFirstProductFromResults() {
         wait.until(d -> productTitleLabels != null && !productTitleLabels.isEmpty());
         click(driver, wait, productTitleLabels.get(0));
+        return new ProductPage(driver);
     }
 
     public void applyColorFilter(String color) {

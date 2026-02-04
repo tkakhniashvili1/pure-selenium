@@ -66,7 +66,7 @@ public class HomePage {
         return driver.getCurrentUrl().toLowerCase().contains(keyword.toLowerCase());
     }
 
-    public void openCategorySubcategory(String category, String subcategory) {
+    public SearchResultsPage openCategorySubcategory(String category, String subcategory) {
         handlePopups();
 
         WebElement cat = findCategory(category);
@@ -75,6 +75,8 @@ public class HomePage {
         wait.until(ExpectedConditions.visibilityOf(catalogueItemsList));
 
         click(driver, wait, findCatalogueItemByTitle(subcategory));
+
+        return new SearchResultsPage(driver);
     }
 
     private WebElement findCatalogueItemByTitle(String title) {

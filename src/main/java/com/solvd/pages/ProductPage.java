@@ -56,8 +56,9 @@ public class ProductPage {
         }
     }
 
-    public void openBag() {
-        click(driver, wait, addToBagButton);
+    public BagPage openBag() {
+        click(driver, wait, viewBagButton);
+        return new BagPage(driver);
     }
 
     private void selectRandomSizeFromDropdownIfPresent() {

@@ -4,7 +4,6 @@ import com.solvd.utils.ConfigReader;
 import org.openqa.selenium.*;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.PageFactory;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
@@ -26,7 +25,8 @@ public class BagPage {
         PageFactory.initElements(driver, this);
     }
 
-    public void proceedToCheckout() {
+    public CheckoutPage proceedToCheckout() {
         click(driver, wait, checkoutButton);
+        return new CheckoutPage(driver);
     }
 }

@@ -61,9 +61,9 @@ public class ECommerceTests {
         driver.get(ConfigReader.getProperty("base.url"));
 
         HomePage homePage = new HomePage(driver);
-        homePage.openCategorySubcategory("women", "All Dresses");
 
-        SearchResultsPage resultsPage = new SearchResultsPage(driver);
+        SearchResultsPage resultsPage = homePage.openCategorySubcategory("women", "All Dresses");
+
         resultsPage.applyColorFilter("Black");
 
         Assert.assertTrue(resultsPage.hasResults(), "No products are displayed after applying filters");
@@ -115,9 +115,8 @@ public class ECommerceTests {
         Assert.assertTrue(resultsPage.isSearchResultsPageLoaded(), "Search results page did not load");
         Assert.assertTrue(resultsPage.hasResults(), "Expected results, but got none");
 
-        resultsPage.openFirstProductFromResults();
+        ProductPage productPage = resultsPage.openFirstProductFromResults();
 
-        ProductPage productPage = new ProductPage(driver);
         Assert.assertTrue(productPage.isProductDetailsLoaded(), "Product details page did not load");
 
         productPage.addCurrentProductToBag();
@@ -135,20 +134,17 @@ public class ECommerceTests {
         Assert.assertTrue(resultsPage.isSearchResultsPageLoaded(), "Search results page did not load");
         Assert.assertTrue(resultsPage.hasResults(), "Expected results, but got none");
 
-        resultsPage.openFirstProductFromResults();
+        ProductPage productPage = resultsPage.openFirstProductFromResults();
 
-        ProductPage productPage = new ProductPage(driver);
         Assert.assertTrue(productPage.isLoaded(), "Product details page did not load");
 
         productPage.addCurrentProductToBag();
+
         Assert.assertTrue(productPage.isViewBagButtonVisible(), "View Bag is not visible after adding to bag");
 
-        productPage.openBag();
+        BagPage bagPage = productPage.openBag();
+        CheckoutPage checkoutPage = bagPage.proceedToCheckout();
 
-        BagPage bagPage = new BagPage(driver);
-        bagPage.proceedToCheckout();
-
-        CheckoutPage checkoutPage = new CheckoutPage(driver);
         Assert.assertTrue(checkoutPage.isSignInRegisterPageLoaded(), "Sign In / Register page did not open");
     }
 
