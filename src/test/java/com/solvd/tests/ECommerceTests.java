@@ -67,7 +67,7 @@ public class ECommerceTests {
         resultsPage.applyColorFilter("Black");
 
         Assert.assertTrue(resultsPage.hasResults(), "No products are displayed after applying filters");
-        Assert.assertTrue(resultsPage.isFilterApplied("Black"), "Black filter is not applied");
+        Assert.assertTrue(resultsPage.isFilterAppliedReliable("Black"), "Black filter is not applied");
     }
 
 

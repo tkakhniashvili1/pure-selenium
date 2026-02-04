@@ -17,8 +17,8 @@ public class ProductPage {
     protected WebDriver driver;
     private final WebDriverWait wait;
 
-    @FindBy(css = "h1")
-    private WebElement pdpTitle;
+    @FindBy(css = "[data-testid='pdp-error'], [role='alert']")
+    private List<WebElement> pdpAlerts;
 
     @FindBy(css = "[data-testid='item-form-addToBag-button']")
     private WebElement addToBagButton;
@@ -36,6 +36,7 @@ public class ProductPage {
     public void addCurrentProductToBag(String size) {
         selectSizeFromDropdownIfPresent(size);
         click(driver, wait, addToBagButton);
+        wait.until(d -> isViewBagButtonVisible() || hasAnyAlert());
     }
 
     public boolean isLoaded() {
@@ -88,7 +89,8 @@ public class ProductPage {
 
             List<WebElement> options = listbox.findElements(optionBy);
             click(driver, wait, findSizeOption(options, size));
-        } catch (NoSuchElementException | TimeoutException ignored) {
+        } catch (NoSuchElementException | TimeoutException e) {
+            throw e;
         }
     }
 
@@ -101,5 +103,13 @@ public class ProductPage {
             if (text != null && text.trim().equalsIgnoreCase(size)) return opt;
         }
         throw new NoSuchElementException("Size option not found: " + size);
+    }
+
+    private boolean hasAnyAlert() {
+        try {
+            return pdpAlerts != null && pdpAlerts.stream().anyMatch(WebElement::isDisplayed);
+        } catch (StaleElementReferenceException e) {
+            return true;
+        }
     }
 }

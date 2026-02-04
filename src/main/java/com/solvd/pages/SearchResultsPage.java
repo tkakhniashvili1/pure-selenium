@@ -21,6 +21,9 @@ public class SearchResultsPage {
     protected WebDriver driver;
     private final WebDriverWait wait;
 
+    private static final By BANNER_CHIPS_BY = By.cssSelector("[data-testid='search-banner-image-chip']");
+    private static final By PRODUCT_TITLES_BY = By.cssSelector("[data-testid='product_summary_title']");
+
     private static final Set<String> URL_FILTER_KEYS = Set.of(
             "colour", "brand", "size", "length", "style", "fit",
             "category", "gender", "neckline", "pattern", "material"
@@ -34,9 +37,6 @@ public class SearchResultsPage {
 
     @FindBy(css = "[data-testid='product_summary_title']")
     private List<WebElement> productTitleLabels;
-
-    @FindBy(css = "[data-testid='search-banner-image-chip']")
-    private List<WebElement> bannerChips;
 
     public SearchResultsPage(WebDriver driver) {
         this.driver = driver;
@@ -95,12 +95,6 @@ public class SearchResultsPage {
         return getAppliedFilters().stream().anyMatch(f -> f.equalsIgnoreCase(expected));
     }
 
-    private String normalize(String s) {
-        if (s == null || s.isBlank()) return s;
-        String low = s.toLowerCase(Locale.ROOT);
-        return Character.toUpperCase(low.charAt(0)) + low.substring(1);
-    }
-
     public boolean isNoResultsTextContainsCountAndQuery(String query) {
         try {
             wait.until(ExpectedConditions.visibilityOf(noResultsText));
@@ -118,8 +112,32 @@ public class SearchResultsPage {
     }
 
     public void applyColorFilter(String color) {
+        String beforeUrl = driver.getCurrentUrl();
+        WebElement beforeFirst = firstProductTitleEl();
+
         click(driver, wait, findChipByText(color));
-        wait.until(ExpectedConditions.urlContains("colour-" + slug(color)));
+
+        wait.until(ExpectedConditions.not(ExpectedConditions.urlToBe(beforeUrl)));
+        wait.until(ExpectedConditions.stalenessOf(beforeFirst));
+        wait.until(d -> d.findElements(PRODUCT_TITLES_BY).size() > 0);
+    }
+
+    public boolean firstNProductTitlesContain(String keyword, int n) {
+        int limit = Math.min(n, productTitleLabels.size());
+        if (limit == 0) return false;
+
+        String k = keyword.toLowerCase(Locale.ROOT);
+        for (int i = 0; i < limit; i++) {
+            String title = productTitleLabels.get(i).getText().toLowerCase(Locale.ROOT);
+            if (!title.contains(k)) return false;
+        }
+        return true;
+    }
+
+    public boolean isFilterAppliedReliable(String expectedColor) {
+        boolean urlOk = isFilterApplied(expectedColor);
+        boolean resultsOk = firstNProductTitlesContain(expectedColor, 5);
+        return urlOk && resultsOk;
     }
 
     public List<String> getProductTitles() {
@@ -133,20 +151,30 @@ public class SearchResultsPage {
     }
 
     public void printProductTitles() {
-        List<String> titles = getProductTitles();
-        for (String t : titles) {
+        for (String t : getProductTitles()) {
             System.out.println(t);
         }
     }
 
+    private WebElement firstProductTitleEl() {
+        wait.until(d -> d.findElements(PRODUCT_TITLES_BY).size() > 0);
+        return driver.findElements(PRODUCT_TITLES_BY).get(0);
+    }
+
     private WebElement findChipByText(String text) {
-        for (WebElement chip : bannerChips) {
-            if (chip.isDisplayed() && chip.getText().trim().equalsIgnoreCase(text)) return chip;
+        wait.until(d -> d.findElements(BANNER_CHIPS_BY).size() > 0);
+
+        List<WebElement> chips = driver.findElements(BANNER_CHIPS_BY);
+        for (WebElement chip : chips) {
+            String t = chip.getText();
+            if (t != null && t.trim().equalsIgnoreCase(text)) return chip;
         }
         throw new NoSuchElementException("Chip not found: " + text);
     }
 
-    private String slug(String value) {
-        return value.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", "-");
+    private String normalize(String s) {
+        if (s == null || s.isBlank()) return s;
+        String low = s.toLowerCase(Locale.ROOT);
+        return Character.toUpperCase(low.charAt(0)) + low.substring(1);
     }
 }
