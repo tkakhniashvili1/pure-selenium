@@ -119,7 +119,7 @@ public class ECommerceTests {
 
         Assert.assertTrue(productPage.isProductDetailsLoaded(), "Product details page did not load");
 
-        productPage.addCurrentProductToBag();
+        productPage.addCurrentProductToBag("8 S");
 
         Assert.assertTrue(productPage.isViewBagButtonVisible(), "View Bag is not visible after adding to bag");
     }
@@ -138,7 +138,7 @@ public class ECommerceTests {
 
         Assert.assertTrue(productPage.isLoaded(), "Product details page did not load");
 
-        productPage.addCurrentProductToBag();
+        productPage.addCurrentProductToBag("5 EU 38");
 
         Assert.assertTrue(productPage.isViewBagButtonVisible(), "View Bag is not visible after adding to bag");
 
