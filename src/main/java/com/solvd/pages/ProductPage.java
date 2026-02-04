@@ -61,23 +61,33 @@ public class ProductPage {
         return new BagPage(driver);
     }
 
-    private void selectRandomSizeFromDropdownIfPresent() {
-        try {
-            WebElement chooseSize = driver.findElement(By.xpath(
-                    "//*[(@role='combobox' or @aria-haspopup='listbox') and " +
-                            "contains(translate(normalize-space(.),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'choose size')]"
-            ));
-            click(driver, wait, chooseSize);
-
-            wait.until(d -> !d.findElements(By.cssSelector("li[role='option'][data-value]")).isEmpty());
-            List<WebElement> options = driver.findElements(By.cssSelector("li[role='option'][data-value]"));
-
-            click(driver, wait, options.get((int) (Math.random() * options.size())));
-        } catch (Exception ignored) {
-        }
-    }
-
     public boolean isProductDetailsLoaded() {
         return isLoaded();
+    }
+
+    private void selectRandomSizeFromDropdownIfPresent() {
+        try {
+            WebElement chooseSize = driver.findElement(
+                    By.cssSelector("div[role='combobox'][aria-labelledby='size-input-label']")
+            );
+
+            click(driver, wait, chooseSize);
+
+            wait.until(d -> "true".equals(chooseSize.getAttribute("aria-expanded")));
+
+            String listboxId = chooseSize.getAttribute("aria-controls");
+            if (listboxId == null || listboxId.isBlank()) return;
+
+            WebElement listbox = wait.until(
+                    ExpectedConditions.visibilityOfElementLocated(By.id(listboxId))
+            );
+
+            By optionBy = By.xpath(".//*[@role='option' and not(@aria-disabled='true')]");
+            wait.until(d -> !listbox.findElements(optionBy).isEmpty());
+
+            List<WebElement> options = listbox.findElements(optionBy);
+            click(driver, wait, options.get((int) (Math.random() * options.size())));
+        } catch (NoSuchElementException | TimeoutException ignored) {
+        }
     }
 }
