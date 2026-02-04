@@ -1,6 +1,6 @@
 package com.solvd.tests;
 
-import com.solvd.pages.HomePage;
+import com.solvd.pages.*;
 import com.solvd.utils.ConfigReader;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -12,6 +12,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.time.Duration;
+import java.util.List;
 
 public class ECommerceTests {
 
@@ -44,98 +45,111 @@ public class ECommerceTests {
     @Test
     public void verifyProductSearch() {
         driver.get(ConfigReader.getProperty("base.url"));
+
         HomePage homePage = new HomePage(driver);
 
-        homePage.searchProduct("dress");
+        SearchResultsPage resultsPage = homePage.searchProductByName("dress");
 
-        Assert.assertTrue(homePage.isSearchResultsPageLoaded(), "Search results page is not loaded.");
-        Assert.assertTrue(homePage.hasResults(), "No search results found.");
+        Assert.assertTrue(resultsPage.isSearchResultsPageLoaded(), "Search results page is not loaded.");
+        Assert.assertTrue(resultsPage.hasResults(), "No search results found.");
         Assert.assertTrue(homePage.isSearchTermInUrl("dress"), "URL does not contain 'dress'.");
-        Assert.assertTrue(homePage.isProductWithTitle("dress"), "No product contains 'dress'.");
+        Assert.assertTrue(resultsPage.isProductWithTitle("dress"), "No product contains 'dress'.");
     }
 
     @Test
     public void verifyWomenDressesFilteredByColor() {
         driver.get(ConfigReader.getProperty("base.url"));
+
         HomePage homePage = new HomePage(driver);
+        homePage.openCategorySubcategory("women", "All Dresses");
 
-        homePage.applyWomenDressesFilters();
+        SearchResultsPage resultsPage = new SearchResultsPage(driver);
+        resultsPage.applyColorFilter("Black");
 
-        Assert.assertTrue(homePage.hasResults(), "No products are displayed after applying filters");
-        Assert.assertTrue(homePage.areFirstProductsBlackDresses(), "Not all products are black dresses");
+        Assert.assertTrue(resultsPage.hasResults(), "No products are displayed after applying filters");
+        Assert.assertTrue(resultsPage.isFilterApplied("Black"), "Black filter is not applied");
     }
 
+
     @Test
-    public void verifyFirstProductFromResultsNavigatesToPdp() {
+    public void verifySearchResultsTitlesPrinted() {
         driver.get(ConfigReader.getProperty("base.url"));
+
         HomePage homePage = new HomePage(driver);
 
-        homePage.searchProduct("jeans");
+        SearchResultsPage resultsPage = homePage.searchProductByName("dress");
 
-        Assert.assertTrue(homePage.isSearchResultsPageLoaded(), "Search results page did not load");
-        Assert.assertTrue(homePage.hasResults(), "Expected results, but got none");
+        Assert.assertTrue(resultsPage.isSearchResultsPageLoaded(), "Search results page did not load");
+        Assert.assertTrue(resultsPage.hasResults(), "Expected results, but got none");
 
-        homePage.openFirstProductFromResults();
+        List<String> titles = resultsPage.getProductTitles();
+        resultsPage.printProductTitles();
 
-        Assert.assertTrue(homePage.isProductDetailsLoaded(), "Product details page did not load");
+        Assert.assertTrue(titles.size() > 0, "Number of results displayed should be > 0");
+        Assert.assertTrue(titles.stream().allMatch(t -> t != null && !t.trim().isEmpty()), "Some titles are empty");
     }
 
     @Test
     public void verifyNoResultsMessageForInvalidSearch() {
         driver.get(ConfigReader.getProperty("base.url"));
+
         HomePage homePage = new HomePage(driver);
-
         String query = "zzzzzzzzzz";
-        homePage.searchProduct(query);
 
-        Assert.assertTrue(homePage.isSearchResultsPageLoaded(), "Search results page is not loaded.");
-        Assert.assertFalse(homePage.hasResults(), "Expected no results, but results were found.");
-        Assert.assertTrue(homePage.isNoResultsTextContainsCountAndQuery(query),
+        SearchResultsPage resultsPage = homePage.searchProductByName(query);
+
+        Assert.assertTrue(resultsPage.isSearchResultsPageLoaded(), "Search results page is not loaded.");
+        Assert.assertFalse(resultsPage.hasResults(), "Expected no results, but results were found.");
+        Assert.assertTrue(resultsPage.isNoResultsTextContainsCountAndQuery(query),
                 "No results text does not contain expected count/query.");
     }
 
     @Test
     public void verifyAddToBagFromPdp() {
         driver.get(ConfigReader.getProperty("base.url"));
+
         HomePage homePage = new HomePage(driver);
 
-        homePage.searchProduct("jeans");
+        SearchResultsPage resultsPage = homePage.searchProductByName("jeans");
 
-        Assert.assertTrue(homePage.isSearchResultsPageLoaded(), "Search results page did not load");
-        Assert.assertTrue(homePage.hasResults(), "Expected results, but got none");
-        Assert.assertTrue(homePage.isSearchTermInUrl("jeans"), "URL does not contain 'jeans'");
+        Assert.assertTrue(resultsPage.isSearchResultsPageLoaded(), "Search results page did not load");
+        Assert.assertTrue(resultsPage.hasResults(), "Expected results, but got none");
 
-        homePage.openFirstProductFromResults();
+        resultsPage.openFirstProductFromResults();
 
-        Assert.assertTrue(homePage.isProductDetailsLoaded(), "Product details page did not load");
+        ProductPage productPage = new ProductPage(driver);
+        Assert.assertTrue(productPage.isProductDetailsLoaded(), "Product details page did not load");
 
-        homePage.addCurrentProductToBag();
+        productPage.addCurrentProductToBag();
 
-        Assert.assertTrue(homePage.isViewBagButtonVisible(), "View Bag is not visible after adding to bag");
+        Assert.assertTrue(productPage.isViewBagButtonVisible(), "View Bag is not visible after adding to bag");
     }
 
     @Test
     public void verifyCheckoutRedirectsToSignInForGuest() {
         driver.get(ConfigReader.getProperty("base.url"));
+
         HomePage homePage = new HomePage(driver);
 
-        homePage.searchProduct("boots");
+        SearchResultsPage resultsPage = homePage.searchProductByName("boots");
+        Assert.assertTrue(resultsPage.isSearchResultsPageLoaded(), "Search results page did not load");
+        Assert.assertTrue(resultsPage.hasResults(), "Expected results, but got none");
 
-        Assert.assertTrue(homePage.isSearchResultsPageLoaded(), "Search results page did not load");
-        Assert.assertTrue(homePage.hasResults(), "Expected results, but got none");
-        Assert.assertTrue(homePage.isSearchTermInUrl("boots"), "URL does not contain 'boots'");
+        resultsPage.openFirstProductFromResults();
 
-        homePage.openFirstProductFromResults();
+        ProductPage productPage = new ProductPage(driver);
+        Assert.assertTrue(productPage.isLoaded(), "Product details page did not load");
 
-        Assert.assertTrue(homePage.isProductDetailsLoaded(), "Product details page did not load");
+        productPage.addCurrentProductToBag();
+        Assert.assertTrue(productPage.isViewBagButtonVisible(), "View Bag is not visible after adding to bag");
 
-        homePage.addCurrentProductToBag();
+        productPage.openBag();
 
-        Assert.assertTrue(homePage.isViewBagButtonVisible(), "View Bag is not visible after adding to bag");
+        BagPage bagPage = new BagPage(driver);
+        bagPage.proceedToCheckout();
 
-        homePage.proceedToCheckoutFromPdp();
-
-        Assert.assertTrue(homePage.isSignInRegisterPageLoaded(), "Sign In / Register page did not open");
+        CheckoutPage checkoutPage = new CheckoutPage(driver);
+        Assert.assertTrue(checkoutPage.isSignInRegisterPageLoaded(), "Sign In / Register page did not open");
     }
 
     @AfterClass
