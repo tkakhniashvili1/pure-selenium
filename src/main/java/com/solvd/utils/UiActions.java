@@ -39,4 +39,9 @@ public final class UiActions {
             return false;
         }
     }
+
+    public static String normalizeText(String s) {
+        if (s == null) return "";
+        return s.trim().replaceAll("\\s+", " ").toLowerCase(java.util.Locale.ROOT);
+    }
 }

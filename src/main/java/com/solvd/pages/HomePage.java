@@ -1,9 +1,7 @@
 package com.solvd.pages;
 
 import com.solvd.utils.ConfigReader;
-import com.solvd.utils.UiActions;
 import org.openqa.selenium.*;
-import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.PageFactory;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -13,29 +11,24 @@ import java.time.Duration;
 import java.util.List;
 
 import static com.solvd.utils.UiActions.click;
+import static com.solvd.utils.UiActions.clickIfPresent;
 
 public class HomePage {
 
-    protected WebDriver driver;
+    protected final WebDriver driver;
     private final WebDriverWait wait;
 
-    @FindBy(id = "onetrust-accept-btn-handler")
-    private WebElement acceptCookiesButton;
+    @FindBy(css = "iframe#framelive")
+    private List<WebElement> iframes;
 
-    @FindBy(css = ".change-country-close")
-    private WebElement closeCountryPopupButton;
+    @FindBy(css = "#search_widget input[name='s']")
+    private WebElement searchInput;
 
-    @FindBy(id = "header-big-screen-search-box")
-    private WebElement searchBar;
+    @FindBy(css = "#search_widget button[type='submit']")
+    private WebElement searchSubmitButton;
 
-    @FindBy(css = "[data-testid^='meganav-primarynav-link-']")
-    private List<WebElement> categoryLinks;
-
-    @FindBy(css = "ul[data-testid='catalogue-items']")
-    private WebElement catalogueItemsList;
-
-    @FindBy(css = "ul[data-testid='catalogue-items'] a[data-testid='catalogueItem-href']")
-    private List<WebElement> catalogueItemLinks;
+    @FindBy(css = "#content .product-title a")
+    private List<WebElement> homeProductTitles;
 
     public HomePage(WebDriver driver) {
         this.driver = driver;
@@ -44,64 +37,58 @@ public class HomePage {
         PageFactory.initElements(driver, this);
     }
 
-    public SearchResultsPage searchProductByName(String productName) {
-        handlePopups();
+    public SearchResultsPage search(String query) {
+        ensureFrontOfficeIframe();
 
-        String beforeUrl = driver.getCurrentUrl();
+        click(driver, wait, searchInput);
+        searchInput.sendKeys(Keys.chord(Keys.COMMAND, "a"), Keys.BACK_SPACE, query);
 
-        wait.until(ExpectedConditions.elementToBeClickable(searchBar));
-        searchBar.click();
-        searchBar.sendKeys(Keys.chord(Keys.CONTROL, "a"));
-        searchBar.sendKeys(Keys.BACK_SPACE);
-
-        searchBar.sendKeys(productName);
-        searchBar.sendKeys(Keys.ENTER);
-
-        wait.until(ExpectedConditions.not(ExpectedConditions.urlToBe(beforeUrl)));
+        if (!clickIfPresent(driver, wait, searchSubmitButton)) {
+            searchInput.sendKeys(Keys.ENTER);
+        }
 
         return new SearchResultsPage(driver);
     }
 
-    public boolean isSearchTermInUrl(String keyword) {
-        return driver.getCurrentUrl().toLowerCase().contains(keyword.toLowerCase());
-    }
+    public String getSearchKeywordFromHome() {
+        ensureFrontOfficeIframe();
 
-    public SearchResultsPage openCategorySubcategory(String category, String subcategory) {
-        handlePopups();
+        wait.until(d -> !homeProductTitles.isEmpty()
+                && !homeProductTitles.get(0).getText().trim().isEmpty());
 
-        WebElement cat = findCategory(category);
-        new Actions(driver).moveToElement(cat).perform();
+        String title = homeProductTitles.get(0).getText().trim();
 
-        wait.until(ExpectedConditions.visibilityOf(catalogueItemsList));
-
-        click(driver, wait, findCatalogueItemByTitle(subcategory));
-
-        return new SearchResultsPage(driver);
-    }
-
-    private WebElement findCatalogueItemByTitle(String title) {
-        for (WebElement a : catalogueItemLinks) {
-            String t = a.getAttribute("title");
-            if (t != null && t.trim().equalsIgnoreCase(title)) return a;
+        String[] tokens = title.split("[^A-Za-z0-9]+");
+        for (String t : tokens) {
+            if (t.length() >= 4) return t.toLowerCase();
         }
-        throw new NoSuchElementException("Subcategory not found: " + title);
+        return title.substring(0, Math.min(6, title.length())).toLowerCase();
     }
 
-    private WebElement findCategory(String category) {
-        String expected = ("meganav-primarynav-link-" + category).toLowerCase();
-        for (WebElement el : categoryLinks) {
-            String v = el.getAttribute("data-testid");
-            if (v != null && v.toLowerCase().equals(expected)) return el;
-        }
-        throw new NoSuchElementException("Category not found: " + category);
+    private void ensureFrontOfficeIframe() {
+        try {
+            wait.until(ExpectedConditions.visibilityOf(searchInput));
+            return;
+        } catch (TimeoutException | NoSuchElementException | StaleElementReferenceException ignored) {}
+
+        driver.switchTo().defaultContent();
+        wait.until(d -> !iframes.isEmpty());
+
+        WebElement target = iframes.get(0);
+        wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(target));
+        wait.until(ExpectedConditions.visibilityOf(searchInput));
     }
 
-    private void handlePopups() {
-        clickIfPresent(acceptCookiesButton);
-        clickIfPresent(closeCountryPopupButton);
-    }
+    public ProductPage openFirstHomeProductPdp() {
+        ensureFrontOfficeIframe();
 
-    private void clickIfPresent(WebElement element) {
-        UiActions.clickIfPresent(driver, wait, element);
+        wait.until(d -> !homeProductTitles.isEmpty());
+        WebElement first = homeProductTitles.stream()
+                .filter(WebElement::isDisplayed)
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("No displayed home product"));
+
+        click(driver, wait, first);
+        return new ProductPage(driver);
     }
 }

@@ -9,10 +9,13 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.time.Duration;
-import java.util.List;
+
+import static com.solvd.utils.UiActions.normalizeText;
 
 public class ECommerceTests {
 
@@ -36,116 +39,148 @@ public class ECommerceTests {
         }
 
         driver.manage().window().maximize();
-
         driver.manage().timeouts().pageLoadTimeout(
                 Duration.ofSeconds(Integer.parseInt(ConfigReader.getProperty("page.load.timeout")))
         );
     }
 
-    @Test
-    public void verifyProductSearch() {
+    @BeforeMethod
+    public void openBaseUrl() {
         driver.get(ConfigReader.getProperty("base.url"));
-
-        HomePage homePage = new HomePage(driver);
-
-        SearchResultsPage resultsPage = homePage.searchProductByName("dress");
-
-        Assert.assertTrue(resultsPage.isSearchResultsPageLoaded(), "Search results page is not loaded.");
-        Assert.assertTrue(resultsPage.hasResults(), "No search results found.");
-        Assert.assertTrue(homePage.isSearchTermInUrl("dress"), "URL does not contain 'dress'.");
-        Assert.assertTrue(resultsPage.isProductWithTitle("dress"), "No product contains 'dress'.");
     }
 
     @Test
-    public void verifyWomenDressesFilteredByColor() {
-        driver.get(ConfigReader.getProperty("base.url"));
-
+    public void verifySuccessfulProductSearch() {
         HomePage homePage = new HomePage(driver);
+        String query = homePage.getSearchKeywordFromHome();
 
-        SearchResultsPage resultsPage = homePage.openCategorySubcategory("women", "All Dresses");
+        SearchResultsPage resultsPage = homePage.search(query);
 
-        resultsPage.applyColorFilter("Black");
+        Assert.assertTrue(resultsPage.isDisplayed(), "Results page not displayed.");
 
-        Assert.assertTrue(resultsPage.hasResults(), "No products are displayed after applying filters");
-        Assert.assertTrue(resultsPage.isFilterAppliedReliable("Black"), "Black filter is not applied");
-    }
+        int count = resultsPage.getDisplayedProductCardsCountAllowZero();
 
-
-    @Test
-    public void verifySearchResultsTitlesPrinted() {
-        driver.get(ConfigReader.getProperty("base.url"));
-
-        HomePage homePage = new HomePage(driver);
-
-        SearchResultsPage resultsPage = homePage.searchProductByName("dress");
-
-        Assert.assertTrue(resultsPage.isSearchResultsPageLoaded(), "Search results page did not load");
-        Assert.assertTrue(resultsPage.hasResults(), "Expected results, but got none");
-
-        List<String> titles = resultsPage.getProductTitles();
-        resultsPage.printProductTitles();
-
-        Assert.assertTrue(titles.size() > 0, "Number of results displayed should be > 0");
-        Assert.assertTrue(titles.stream().allMatch(t -> t != null && !t.trim().isEmpty()), "Some titles are empty");
+        Assert.assertTrue(count > 0, "Number of displayed product cards should be > 0");
+        Assert.assertTrue(resultsPage.hasAnyProductTitleContaining(query), "At least one product title should contain '" + query);
     }
 
     @Test
-    public void verifyNoResultsMessageForInvalidSearch() {
-        driver.get(ConfigReader.getProperty("base.url"));
-
+    public void verifyProductSearchWithNoResults() {
         HomePage homePage = new HomePage(driver);
-        String query = "zzzzzzzzzz";
 
-        SearchResultsPage resultsPage = homePage.searchProductByName(query);
+        String query = "wkjnefjnfinerifgnrenfgjnrbvbvbvbvbvbvbbvbvbvbvbbvbvbv";
+        SearchResultsPage resultsPage = homePage.search(query);
 
-        Assert.assertTrue(resultsPage.isSearchResultsPageLoaded(), "Search results page is not loaded.");
-        Assert.assertFalse(resultsPage.hasResults(), "Expected no results, but results were found.");
-        Assert.assertTrue(resultsPage.isNoResultsTextContainsCountAndQuery(query),
-                "No results text does not contain expected count/query.");
+        Assert.assertTrue(resultsPage.isDisplayed(), "Results page not displayed.");
+        Assert.assertTrue(resultsPage.isNoMatchesMessageDisplayed(), "No matches message should be displayed.");
+        Assert.assertEquals(resultsPage.getDisplayedProductCardsCountAllowZero(), 0,
+                "Displayed product cards should be 0 for a no-results search.");
     }
 
     @Test
-    public void verifyAddToBagFromPdp() {
-        driver.get(ConfigReader.getProperty("base.url"));
-
+    public void verifyProductDetailsPageOpensFromSearchResults() {
         HomePage homePage = new HomePage(driver);
+        String query = homePage.getSearchKeywordFromHome();
 
-        SearchResultsPage resultsPage = homePage.searchProductByName("jeans");
+        SearchResultsPage resultsPage = homePage.search(query);
+        Assert.assertTrue(resultsPage.isDisplayed(), "Results page not displayed.");
+        Assert.assertTrue(resultsPage.getDisplayedProductCardsCountAllowZero() > 0,
+                "Search should return at least 1 product.");
 
-        Assert.assertTrue(resultsPage.isSearchResultsPageLoaded(), "Search results page did not load");
-        Assert.assertTrue(resultsPage.hasResults(), "Expected results, but got none");
+        String clickedTitle = resultsPage.getFirstDisplayedProductTitle();
+        Assert.assertFalse(normalizeText(clickedTitle).isEmpty(), "Clicked product title is empty.");
 
-        ProductPage productPage = resultsPage.openFirstProductFromResults();
+        ProductPage productPage = resultsPage.openFirstDisplayedProduct();
 
-        Assert.assertTrue(productPage.isProductDetailsLoaded(), "Product details page did not load");
+        Assert.assertTrue(productPage.isAddToCartVisibleAndEnabled(),
+                "Add to cart button is not visible/enabled.");
 
-        productPage.addCurrentProductToBag("8 S");
+        String pdpTitle = productPage.getTitle();
+        Assert.assertFalse(normalizeText(pdpTitle).isEmpty(), "PDP title is empty.");
 
-        Assert.assertTrue(productPage.isViewBagButtonVisible(), "View Bag is not visible after adding to bag");
+        Assert.assertTrue(
+                normalizeText(pdpTitle).contains(normalizeText(clickedTitle)) ||
+                        normalizeText(clickedTitle).contains(normalizeText(pdpTitle)),
+                "PDP title should match/contain clicked product title."
+        );
     }
 
     @Test
-    public void verifyCheckoutRedirectsToSignInForGuest() {
-        driver.get(ConfigReader.getProperty("base.url"));
-
+    public void verifyCartQuantityUpdateRecalculatesTotals() {
         HomePage homePage = new HomePage(driver);
 
-        SearchResultsPage resultsPage = homePage.searchProductByName("boots");
-        Assert.assertTrue(resultsPage.isSearchResultsPageLoaded(), "Search results page did not load");
-        Assert.assertTrue(resultsPage.hasResults(), "Expected results, but got none");
+        ProductPage productPage = homePage.openFirstHomeProductPdp();
+        productPage.selectRequiredOptionsIfPresent();
+        productPage.addToCart();
 
-        ProductPage productPage = resultsPage.openFirstProductFromResults();
+        Assert.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
 
-        Assert.assertTrue(productPage.isLoaded(), "Product details page did not load");
+        CartPage cartPage = productPage.openCartFromModal();
+        Assert.assertTrue(cartPage.isDisplayed(), "Cart page not displayed (cart lines not visible).");
 
-        productPage.addCurrentProductToBag("5 EU 38");
+        int qty1 = cartPage.getQuantity();
+        BigDecimal subtotal1 = cartPage.getProductsSubtotal();
+        BigDecimal total1 = cartPage.getTotal();
 
-        Assert.assertTrue(productPage.isViewBagButtonVisible(), "View Bag is not visible after adding to bag");
+        int targetQty = (qty1 < 2) ? 2 : (qty1 + 1);
+        cartPage.increaseQuantityTo(targetQty);
 
-        BagPage bagPage = productPage.openBag();
-        CheckoutPage checkoutPage = bagPage.proceedToCheckout();
+        Assert.assertEquals(cartPage.getQuantity(), targetQty, "Quantity value was not updated.");
 
-        Assert.assertTrue(checkoutPage.isSignInRegisterPageLoaded(), "Sign In / Register page did not open");
+        BigDecimal subtotal2 = cartPage.getProductsSubtotal();
+        BigDecimal total2 = cartPage.getTotal();
+
+        Assert.assertTrue(subtotal2.compareTo(subtotal1) > 0, "Products subtotal should increase after qty increase.");
+        Assert.assertTrue(total2.compareTo(total1) >= 0, "Total should not decrease after qty increase.");
+    }
+
+    @Test
+    public void verifyAddToCartFromProductDetailsPage() {
+        HomePage homePage = new HomePage(driver);
+        ProductPage productPage = homePage.openFirstHomeProductPdp();
+
+        String pdpTitle = productPage.getTitle();
+        int before = productPage.getCartCount();
+
+        productPage.selectRequiredOptionsIfPresent();
+        productPage.addToCart();
+
+        Assert.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
+        Assert.assertTrue(productPage.getModalItemsCount() > 0, "Modal cart items count should be > 0.");
+
+        Assert.assertEquals(
+                normalizeText(productPage.getModalProductName()),
+                normalizeText(pdpTitle),
+                "Modal shows incorrect product name (should match PDP title)."
+        );
+
+        int after = productPage.waitForCartCountToIncrease(before);
+        Assert.assertTrue(after > before, "Cart count should increase after add to cart.");
+    }
+
+    @Test
+    public void verifyRemovingProductEmptiesTheCart() {
+        HomePage homePage = new HomePage(driver);
+        ProductPage productPage = homePage.openFirstHomeProductPdp();
+
+        int beforeHeader = productPage.getCartCount();
+
+        productPage.selectRequiredOptionsIfPresent();
+        productPage.addToCart();
+
+        Assert.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
+
+        CartPage cartPage = productPage.openCartFromModal();
+        Assert.assertTrue(cartPage.isDisplayed(), "Cart page not displayed.");
+
+        Assert.assertTrue(cartPage.getCartLinesCount() > 0, "Cart should have at least 1 product line.");
+
+        cartPage.removeFirstLine();
+
+        Assert.assertEquals(cartPage.getCartLinesCount(), 0, "Product line should be removed from the cart.");
+        Assert.assertTrue(cartPage.isEmptyCartMessageDisplayed(), "Empty cart message should be displayed.");
+        Assert.assertTrue(cartPage.getHeaderCartCount() == 0 || cartPage.getHeaderCartCount() < beforeHeader,
+                "Cart quantity indicator should be 0 (or disappear).");
     }
 
     @AfterClass
