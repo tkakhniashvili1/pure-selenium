@@ -93,4 +93,14 @@ public class SearchResultsPage {
         WebElement first = productTitles.stream().filter(WebElement::isDisplayed).findFirst().orElseThrow();
         return first.getText().trim();
     }
+
+    public java.util.List<String> getDisplayedProductTitles() {
+        wait.until(d -> productTitles != null && !productTitles.isEmpty());
+        return productTitles.stream()
+                .filter(WebElement::isDisplayed)
+                .map(WebElement::getText)
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .toList();
+    }
 }

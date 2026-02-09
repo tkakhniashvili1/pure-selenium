@@ -20,7 +20,7 @@ public class ProductPage {
     protected final WebDriver driver;
     private final WebDriverWait wait;
 
-    @FindBy(css = "h1")
+    @FindBy(css = "#main h1")
     private WebElement pdpTitle;
 
     @FindBy(css = "form#add-to-cart-or-refresh button[data-button-action='add-to-cart']")
@@ -29,13 +29,13 @@ public class ProductPage {
     @FindBy(css = ".product-variants select")
     private List<WebElement> variantSelects;
 
-    @FindBy(css = ".product-variants .input-color + span.color")
+    @FindBy(css = ".product-variants .color")
     private List<WebElement> colorSwatches;
 
     @FindBy(css = "#blockcart-modal .product-name")
     private WebElement modalProductName;
 
-    @FindBy(css = "#blockcart-modal a.btn.btn-primary[href*='cart?action=show']")
+    @FindBy(css = "#blockcart-modal a.btn.btn-primary")
     private WebElement proceedToCheckoutButton;
 
     @FindBy(css = "#_desktop_cart .cart-products-count")

@@ -46,6 +46,7 @@ public class ECommerceTests {
 
     @BeforeMethod
     public void openBaseUrl() {
+        driver.manage().deleteAllCookies();
         driver.get(ConfigReader.getProperty("base.url"));
     }
 
@@ -61,6 +62,7 @@ public class ECommerceTests {
         int count = resultsPage.getDisplayedProductCardsCountAllowZero();
 
         Assert.assertTrue(count > 0, "Number of displayed product cards should be > 0");
+        resultsPage.getDisplayedProductTitles().forEach(System.out::println);
         Assert.assertTrue(resultsPage.hasAnyProductTitleContaining(query), "At least one product title should contain '" + query);
     }
 
@@ -106,35 +108,6 @@ public class ECommerceTests {
     }
 
     @Test
-    public void verifyCartQuantityUpdateRecalculatesTotals() {
-        HomePage homePage = new HomePage(driver);
-
-        ProductPage productPage = homePage.openFirstHomeProductPdp();
-        productPage.selectRequiredOptionsIfPresent();
-        productPage.addToCart();
-
-        Assert.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
-
-        CartPage cartPage = productPage.openCartFromModal();
-        Assert.assertTrue(cartPage.isDisplayed(), "Cart page not displayed (cart lines not visible).");
-
-        int qty1 = cartPage.getQuantity();
-        BigDecimal subtotal1 = cartPage.getProductsSubtotal();
-        BigDecimal total1 = cartPage.getTotal();
-
-        int targetQty = (qty1 < 2) ? 2 : (qty1 + 1);
-        cartPage.increaseQuantityTo(targetQty);
-
-        Assert.assertEquals(cartPage.getQuantity(), targetQty, "Quantity value was not updated.");
-
-        BigDecimal subtotal2 = cartPage.getProductsSubtotal();
-        BigDecimal total2 = cartPage.getTotal();
-
-        Assert.assertTrue(subtotal2.compareTo(subtotal1) > 0, "Products subtotal should increase after qty increase.");
-        Assert.assertTrue(total2.compareTo(total1) >= 0, "Total should not decrease after qty increase.");
-    }
-
-    @Test
     public void verifyAddToCartFromProductDetailsPage() {
         HomePage homePage = new HomePage(driver);
         ProductPage productPage = homePage.openFirstHomeProductPdp();
@@ -159,11 +132,37 @@ public class ECommerceTests {
     }
 
     @Test
+    public void verifyCartQuantityUpdateRecalculatesTotals() {
+        HomePage homePage = new HomePage(driver);
+
+        ProductPage productPage = homePage.openFirstHomeProductPdp();
+        productPage.selectRequiredOptionsIfPresent();
+        productPage.addToCart();
+
+        Assert.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
+
+        CartPage cartPage = productPage.openCartFromModal();
+        Assert.assertTrue(cartPage.isDisplayed(), "Cart page not displayed (cart lines not visible).");
+
+        BigDecimal subtotal1 = cartPage.getProductsSubtotal();
+        BigDecimal total1 = cartPage.getTotal();
+
+        int targetQty = 2;
+        cartPage.increaseQuantityTo(targetQty);
+
+        Assert.assertEquals(cartPage.getQuantity(), targetQty, "Quantity value was not updated.");
+
+        BigDecimal subtotal2 = cartPage.getProductsSubtotal();
+        BigDecimal total2 = cartPage.getTotal();
+
+        Assert.assertTrue(subtotal2.compareTo(subtotal1) > 0, "Products subtotal should increase after qty increase.");
+        Assert.assertTrue(total2.compareTo(total1) > 0, "Total should increase after quantity increase.");
+    }
+
+    @Test
     public void verifyRemovingProductEmptiesTheCart() {
         HomePage homePage = new HomePage(driver);
         ProductPage productPage = homePage.openFirstHomeProductPdp();
-
-        int beforeHeader = productPage.getCartCount();
 
         productPage.selectRequiredOptionsIfPresent();
         productPage.addToCart();
@@ -179,8 +178,7 @@ public class ECommerceTests {
 
         Assert.assertEquals(cartPage.getCartLinesCount(), 0, "Product line should be removed from the cart.");
         Assert.assertTrue(cartPage.isEmptyCartMessageDisplayed(), "Empty cart message should be displayed.");
-        Assert.assertTrue(cartPage.getHeaderCartCount() == 0 || cartPage.getHeaderCartCount() < beforeHeader,
-                "Cart quantity indicator should be 0 (or disappear).");
+        Assert.assertEquals(cartPage.getHeaderCartCount(), 0, "Cart quantity indicator should be 0.");
     }
 
     @AfterClass

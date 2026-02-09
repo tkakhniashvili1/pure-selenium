@@ -19,7 +19,7 @@ public class CartPage {
     @FindBy(css = "iframe#framelive")
     private List<WebElement> iframes;
 
-    @FindBy(css = ".cart-items .cart-item, .cart-item")
+    @FindBy(css = "#main .cart-items .cart-item")
     private List<WebElement> cartLines;
 
     @FindBy(css = "input.js-cart-line-product-quantity")
@@ -37,7 +37,7 @@ public class CartPage {
     @FindBy(css = "a[data-link-action='delete-from-cart'], a.remove-from-cart")
     private List<WebElement> removeButtons;
 
-    @FindBy(css = ".no-items")
+    @FindBy(css = "#main .no-items")
     private List<WebElement> emptyCartMessage;
 
     @FindBy(css = "#_desktop_cart .cart-products-count, #_mobile_cart .cart-products-count")
