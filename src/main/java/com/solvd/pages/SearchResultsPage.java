@@ -51,11 +51,6 @@ public class SearchResultsPage {
         }
     }
 
-    public int getDisplayedProductCardsCount() {
-        wait.until(d -> !productCards.isEmpty());
-        return productCards.size();
-    }
-
     public boolean hasAnyProductTitleContaining(String keyword) {
         String k = keyword.toLowerCase(Locale.ROOT);
 
