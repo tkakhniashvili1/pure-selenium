@@ -20,10 +20,10 @@ public class CartPage {
     private List<WebElement> iframes;
 
     @FindBy(css = "#main .cart-items .cart-item")
-    private List<WebElement> cartLines;
+    private List<WebElement> cartItems;
 
     @FindBy(css = "input.js-cart-line-product-quantity")
-    private List<WebElement> qtyInputs;
+    private List<WebElement> cartItemQuantities;
 
     @FindBy(css = "button.js-increase-product-quantity")
     private List<WebElement> qtyPlusButtons;
@@ -31,16 +31,16 @@ public class CartPage {
     @FindBy(css = "#cart-subtotal-products .value, .cart-summary-line.cart-subtotal .value, .cart-subtotal .value")
     private List<WebElement> subtotal;
 
-    @FindBy(css = "#cart-total .value, .cart-summary-line.cart-total .value, .cart-summary-totals .cart-total .value, .cart-total .value")
+    @FindBy(css = ".cart-total .value")
     private List<WebElement> total;
 
-    @FindBy(css = "a[data-link-action='delete-from-cart'], a.remove-from-cart")
+    @FindBy(css = "a.remove-from-cart")
     private List<WebElement> removeButtons;
 
     @FindBy(css = "#main .no-items")
     private List<WebElement> emptyCartMessage;
 
-    @FindBy(css = "#_desktop_cart .cart-products-count, #_mobile_cart .cart-products-count")
+    @FindBy(css = ".cart-products-count")
     private List<WebElement> cartCount;
 
     public CartPage(WebDriver driver) {
@@ -53,7 +53,7 @@ public class CartPage {
     }
 
     private void ensureFrontOfficeIframe() {
-        if (firstVisible(cartLines, emptyCartMessage) != null) return;
+        if (findFirstVisibleElement(cartItems, emptyCartMessage) != null) return;
 
         driver.switchTo().defaultContent();
         wait.until(d -> iframes != null && !iframes.isEmpty());
@@ -62,7 +62,7 @@ public class CartPage {
 
     public void waitForLoaded() {
         ensureFrontOfficeIframe();
-        wait.until(d -> firstVisible(cartLines, emptyCartMessage) != null);
+        wait.until(d -> findFirstVisibleElement(cartItems, emptyCartMessage) != null);
     }
 
     public boolean isDisplayed() {
@@ -76,33 +76,33 @@ public class CartPage {
 
     public int getQuantity() {
         ensureFrontOfficeIframe();
-        wait.until(d -> firstVisible(qtyInputs) != null);
+        wait.until(d -> findFirstVisibleElement(cartItemQuantities) != null);
 
-        String v = firstVisible(qtyInputs).getAttribute("value");
+        String v = findFirstVisibleElement(cartItemQuantities).getAttribute("value");
         return (v == null || v.isBlank()) ? 0 : Integer.parseInt(v.trim());
     }
 
     public BigDecimal getProductsSubtotal() {
         ensureFrontOfficeIframe();
-        wait.until(d -> firstVisible(subtotal) != null);
-        return parseMoney(firstVisible(subtotal).getText());
+        wait.until(d -> findFirstVisibleElement(subtotal) != null);
+        return parseMoney(findFirstVisibleElement(subtotal).getText());
     }
 
     public BigDecimal getTotal() {
         ensureFrontOfficeIframe();
-        wait.until(d -> firstVisible(total) != null);
-        return parseMoney(firstVisible(total).getText());
+        wait.until(d -> findFirstVisibleElement(total) != null);
+        return parseMoney(findFirstVisibleElement(total).getText());
     }
 
     public void increaseQuantityTo(int target) {
         ensureFrontOfficeIframe();
-        wait.until(d -> firstVisible(qtyPlusButtons) != null && firstVisible(qtyPlusButtons).isEnabled());
+        wait.until(d -> findFirstVisibleElement(qtyPlusButtons) != null && findFirstVisibleElement(qtyPlusButtons).isEnabled());
 
         while (getQuantity() < target) {
             int beforeQty = getQuantity();
             BigDecimal beforeSubtotal = getProductsSubtotal();
 
-            firstVisible(qtyPlusButtons).click();
+            findFirstVisibleElement(qtyPlusButtons).click();
 
             wait.until(d ->
                     getQuantity() > beforeQty &&
@@ -115,32 +115,32 @@ public class CartPage {
 
     public int getCartLinesCount() {
         ensureFrontOfficeIframe();
-        if (firstVisible(emptyCartMessage) != null) return 0;
-        return (int) cartLines.stream().filter(el -> el != null && el.isDisplayed()).count();
+        if (findFirstVisibleElement(emptyCartMessage) != null) return 0;
+        return (int) cartItems.stream().filter(el -> el != null && el.isDisplayed()).count();
     }
 
     public void removeFirstLine() {
         ensureFrontOfficeIframe();
-        wait.until(d -> firstVisible(cartLines, emptyCartMessage) != null);
+        wait.until(d -> findFirstVisibleElement(cartItems, emptyCartMessage) != null);
 
-        wait.until(d -> firstVisible(removeButtons) != null && firstVisible(removeButtons).isEnabled());
-        firstVisible(removeButtons).click();
+        wait.until(d -> findFirstVisibleElement(removeButtons) != null && findFirstVisibleElement(removeButtons).isEnabled());
+        findFirstVisibleElement(removeButtons).click();
 
-        wait.until(d -> firstVisible(cartLines) == null && firstVisible(emptyCartMessage) != null);
+        wait.until(d -> findFirstVisibleElement(cartItems) == null && findFirstVisibleElement(emptyCartMessage) != null);
     }
 
     public boolean isEmptyCartMessageDisplayed() {
         ensureFrontOfficeIframe();
-        return firstVisible(emptyCartMessage) != null;
+        return findFirstVisibleElement(emptyCartMessage) != null;
     }
 
     public int getHeaderCartCount() {
         ensureFrontOfficeIframe();
-        WebElement el = firstVisible(cartCount);
-        return (el == null) ? 0 : parseCount(textContent(el));
+        WebElement el = findFirstVisibleElement(cartCount);
+        return (el == null) ? 0 : parseIntegerFromText(textContent(el));
     }
 
-    private WebElement firstVisible(List<WebElement>... groups) {
+    private WebElement findFirstVisibleElement(List<WebElement>... groups) {
         for (List<WebElement> g : groups) {
             if (g == null) continue;
             for (WebElement el : g) {
@@ -153,7 +153,7 @@ public class CartPage {
         return null;
     }
 
-    private int parseCount(String raw) {
+    private int parseIntegerFromText(String raw) {
         if (raw == null) return 0;
         String digits = raw.replaceAll("[^0-9]", "");
         return digits.isEmpty() ? 0 : Integer.parseInt(digits);

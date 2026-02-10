@@ -59,7 +59,7 @@ public class ECommerceTests {
 
         Assert.assertTrue(resultsPage.isDisplayed(), "Results page not displayed.");
 
-        int count = resultsPage.getDisplayedProductCardsCountAllowZero();
+        int count = resultsPage.getVisibleProductCardCount();
 
         Assert.assertTrue(count > 0, "Number of displayed product cards should be > 0");
         resultsPage.getDisplayedProductTitles().forEach(System.out::println);
@@ -75,7 +75,7 @@ public class ECommerceTests {
 
         Assert.assertTrue(resultsPage.isDisplayed(), "Results page not displayed.");
         Assert.assertTrue(resultsPage.isNoMatchesMessageDisplayed(), "No matches message should be displayed.");
-        Assert.assertEquals(resultsPage.getDisplayedProductCardsCountAllowZero(), 0,
+        Assert.assertEquals(resultsPage.getVisibleProductCardCount(), 0,
                 "Displayed product cards should be 0 for a no-results search.");
     }
 
@@ -86,7 +86,7 @@ public class ECommerceTests {
 
         SearchResultsPage resultsPage = homePage.search(query);
         Assert.assertTrue(resultsPage.isDisplayed(), "Results page not displayed.");
-        Assert.assertTrue(resultsPage.getDisplayedProductCardsCountAllowZero() > 0,
+        Assert.assertTrue(resultsPage.getVisibleProductCardCount() > 0,
                 "Search should return at least 1 product.");
 
         String clickedTitle = resultsPage.getFirstDisplayedProductTitle();
@@ -110,7 +110,7 @@ public class ECommerceTests {
     @Test
     public void verifyAddToCartFromProductDetailsPage() {
         HomePage homePage = new HomePage(driver);
-        ProductPage productPage = homePage.openFirstHomeProductPdp();
+        ProductPage productPage = homePage.openFirstProduct();
 
         String pdpTitle = productPage.getTitle();
         int before = productPage.getCartCount();
@@ -135,7 +135,7 @@ public class ECommerceTests {
     public void verifyCartQuantityUpdateRecalculatesTotals() {
         HomePage homePage = new HomePage(driver);
 
-        ProductPage productPage = homePage.openFirstHomeProductPdp();
+        ProductPage productPage = homePage.openFirstProduct();
         productPage.selectRequiredOptionsIfPresent();
         productPage.addToCart();
 
@@ -162,7 +162,7 @@ public class ECommerceTests {
     @Test
     public void verifyRemovingProductEmptiesTheCart() {
         HomePage homePage = new HomePage(driver);
-        ProductPage productPage = homePage.openFirstHomeProductPdp();
+        ProductPage productPage = homePage.openFirstProduct();
 
         productPage.selectRequiredOptionsIfPresent();
         productPage.addToCart();

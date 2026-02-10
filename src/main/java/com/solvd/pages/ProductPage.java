@@ -21,7 +21,7 @@ public class ProductPage {
     private final WebDriverWait wait;
 
     @FindBy(css = "#main h1")
-    private WebElement pdpTitle;
+    private WebElement productTitle;
 
     @FindBy(css = "form#add-to-cart-or-refresh button[data-button-action='add-to-cart']")
     private WebElement addToCartButton;
@@ -63,8 +63,8 @@ public class ProductPage {
     }
 
     public String getTitle() {
-        wait.until(ExpectedConditions.visibilityOf(pdpTitle));
-        return pdpTitle.getText().trim();
+        wait.until(ExpectedConditions.visibilityOf(productTitle));
+        return productTitle.getText().trim();
     }
 
     public boolean isAddToCartVisibleAndEnabled() {
@@ -73,28 +73,30 @@ public class ProductPage {
     }
 
     public void selectRequiredOptionsIfPresent() {
-        for (WebElement el : variantSelects) {
-            Select s = new Select(el);
-            for (WebElement opt : s.getOptions()) {
-                String value = opt.getAttribute("value");
-                if (value == null || value.isBlank() || opt.getAttribute("disabled") != null) continue;
-                s.selectByValue(value);
-                break;
+        for (WebElement selectVariant: variantSelects) {
+            Select select = new Select(selectVariant);
+            select.getOptions().stream()
+                    .filter(opt -> opt.isEnabled() && !opt.getAttribute("value").isBlank())
+                    .findFirst()
+                    .ifPresent(opt -> select.selectByValue(opt.getAttribute("value")));
+        }
+
+        Set<String> pickedNames = new HashSet<>();
+        for (WebElement radio : variantRadios) {
+            String name = radio.getAttribute("name");
+            if (name != null && !name.isBlank() && radio.isEnabled() && pickedNames.add(name)) {
+                try {
+                    radio.click();
+                } catch (ElementClickInterceptedException e) {
+                    ((JavascriptExecutor) driver).executeScript("arguments[0].click();", radio);
+                }
             }
         }
 
-        Set<String> picked = new HashSet<>();
-        for (WebElement r : variantRadios) {
-            String name = r.getAttribute("name");
-            if (name == null || name.isBlank() || r.getAttribute("disabled") != null) continue;
-            if (!picked.add(name)) continue;
-            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", r);
-        }
-
-        if (colorSwatches != null && !colorSwatches.isEmpty()) {
-            WebElement swatch = colorSwatches.stream().filter(WebElement::isDisplayed).findFirst().orElse(null);
-            if (swatch != null) click(driver, wait, swatch);
-        }
+        colorSwatches.stream()
+                .filter(WebElement::isDisplayed)
+                .findFirst()
+                .ifPresent(swatch -> click(driver, wait, swatch));
     }
 
     public void addToCart() {
@@ -117,21 +119,20 @@ public class ProductPage {
     }
 
     public int getCartCount() {
-        WebElement el = getCartCountElementOrNull();
+        WebElement el = getFirstAvailableCartCountElement();
         if (el == null) return 0;
         return parseCount(textContent(el));
     }
 
-    public int waitForCartCountToIncrease(int before) {
-        wait.until(ExpectedConditions.visibilityOf(modalCartItemsLine));
-        int target = parseCount(modalCartItemsLine.getText());
-        if (target <= before) target = before + 1;
-
-        int finalTarget = target;
+    public int waitForCartCountToIncrease(int initialCount) {
+        int expectedCount = initialCount + 1;
 
         wait.until(d -> {
-            try { return getCartCount() >= finalTarget; }
-            catch (StaleElementReferenceException ignored) { return false; }
+            try {
+                return getCartCount() >= expectedCount;
+            } catch (StaleElementReferenceException | NoSuchElementException ignored) {
+                return false;
+            }
         });
 
         return getCartCount();
@@ -144,7 +145,7 @@ public class ProductPage {
         return Integer.parseInt(digits);
     }
 
-    private WebElement getCartCountElementOrNull() {
+    private WebElement getFirstAvailableCartCountElement() {
         if (desktopCartCount != null && !desktopCartCount.isEmpty()) return desktopCartCount.get(0);
         if (mobileCartCount != null && !mobileCartCount.isEmpty()) return mobileCartCount.get(0);
         return null;

@@ -66,30 +66,35 @@ public class SearchResultsPage {
                 || pageNotFoundSection.stream().anyMatch(WebElement::isDisplayed);
     }
 
-    public int getDisplayedProductCardsCountAllowZero() {
-        wait.until(d -> !noMatchesHeader.isEmpty() || !pageNotFoundSection.isEmpty() || !productCards.isEmpty());
+    public int getVisibleProductCardCount() {
+        wait.until(d -> productCards.stream().anyMatch(WebElement::isDisplayed)
+                || noMatchesHeader.stream().anyMatch(WebElement::isDisplayed)
+                || pageNotFoundSection.stream().anyMatch(WebElement::isDisplayed));
+
         if (isNoMatchesMessageDisplayed()) return 0;
-        try {
-            return (int) productCards.stream().filter(WebElement::isDisplayed).count();
-        } catch (StaleElementReferenceException e) {
-            return (int) productCards.stream().filter(WebElement::isDisplayed).count();
+
+        int retries = 2;
+        for (int i = 0; i < retries; i++) {
+            try {
+                return (int) productCards.stream().filter(WebElement::isDisplayed).count();
+            } catch (StaleElementReferenceException e) {
+                if (i == retries - 1) throw e;
+            }
         }
+        return 0;
     }
 
     public ProductPage openFirstDisplayedProduct() {
-        wait.until(d -> !productTitles.isEmpty());
-        WebElement first = productTitles.stream().filter(WebElement::isDisplayed).findFirst().orElseThrow();
+        WebElement first = firstVisibleProductTitle();
         click(driver, wait, first);
-
         return new ProductPage(driver);
     }
 
     public String getFirstDisplayedProductTitle() {
-        WebElement first = productTitles.stream().filter(WebElement::isDisplayed).findFirst().orElseThrow();
-        return first.getText().trim();
+        return firstVisibleProductTitle().getText().trim();
     }
 
-    public java.util.List<String> getDisplayedProductTitles() {
+    public List<String> getDisplayedProductTitles() {
         wait.until(d -> productTitles != null && !productTitles.isEmpty());
         return productTitles.stream()
                 .filter(WebElement::isDisplayed)
@@ -97,5 +102,13 @@ public class SearchResultsPage {
                 .map(String::trim)
                 .filter(s -> !s.isBlank())
                 .toList();
+    }
+
+    private WebElement firstVisibleProductTitle() {
+        wait.until(d -> productTitles.stream().anyMatch(WebElement::isDisplayed));
+        return productTitles.stream()
+                .filter(WebElement::isDisplayed)
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("No visible product titles found"));
     }
 }

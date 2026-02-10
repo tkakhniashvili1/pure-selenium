@@ -28,7 +28,7 @@ public class HomePage {
     private WebElement searchSubmitButton;
 
     @FindBy(css = "#content .product-title a")
-    private List<WebElement> homeProductTitles;
+    private List<WebElement> productTitleLinks;
 
     public HomePage(WebDriver driver) {
         this.driver = driver;
@@ -53,10 +53,10 @@ public class HomePage {
     public String getSearchKeywordFromHome() {
         ensureFrontOfficeIframe();
 
-        wait.until(d -> !homeProductTitles.isEmpty()
-                && !homeProductTitles.get(0).getText().trim().isEmpty());
+        wait.until(d -> !productTitleLinks.isEmpty()
+                && !productTitleLinks.get(0).getText().trim().isEmpty());
 
-        String title = homeProductTitles.get(0).getText().trim();
+        String title = productTitleLinks.get(0).getText().trim();
 
         String[] tokens = title.split("[^A-Za-z0-9]+");
         for (String t : tokens) {
@@ -79,11 +79,11 @@ public class HomePage {
         wait.until(ExpectedConditions.visibilityOf(searchInput));
     }
 
-    public ProductPage openFirstHomeProductPdp() {
+    public ProductPage openFirstProduct() {
         ensureFrontOfficeIframe();
 
-        wait.until(d -> !homeProductTitles.isEmpty());
-        WebElement first = homeProductTitles.stream()
+        wait.until(d -> !productTitleLinks.isEmpty());
+        WebElement first = productTitleLinks.stream()
                 .filter(WebElement::isDisplayed)
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException("No displayed home product"));
