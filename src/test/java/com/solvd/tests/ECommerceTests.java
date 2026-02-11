@@ -12,7 +12,7 @@ public class ECommerceTests extends AbstractTest {
 
     @Test
     public void verifySuccessfulProductSearch() {
-        HomePage homePage = new HomePage(driver());
+        HomePage homePage = new HomePage(getDriver());
         String query = homePage.getSearchKeywordFromHome();
 
         SearchResultsPage resultsPage = homePage.search(query);
@@ -28,7 +28,7 @@ public class ECommerceTests extends AbstractTest {
 
     @Test
     public void verifyProductSearchWithNoResults() {
-        HomePage homePage = new HomePage(driver());
+        HomePage homePage = new HomePage(getDriver());
 
         String query = "wkjnefjnfinerifgnrenfgjnrbvbvbvbvbvbvbbvbvbvbvbbvbvbv";
         SearchResultsPage resultsPage = homePage.search(query);
@@ -41,7 +41,7 @@ public class ECommerceTests extends AbstractTest {
 
     @Test
     public void verifyProductDetailsPageOpensFromSearchResults() {
-        HomePage homePage = new HomePage(driver());
+        HomePage homePage = new HomePage(getDriver());
         String query = homePage.getSearchKeywordFromHome();
 
         SearchResultsPage resultsPage = homePage.search(query);
@@ -69,7 +69,7 @@ public class ECommerceTests extends AbstractTest {
 
     @Test
     public void verifyAddToCartFromProductDetailsPage() {
-        HomePage homePage = new HomePage(driver());
+        HomePage homePage = new HomePage(getDriver());
         ProductPage productPage = homePage.openFirstProduct();
 
         String pdpTitle = productPage.getTitle();
@@ -93,7 +93,7 @@ public class ECommerceTests extends AbstractTest {
 
     @Test
     public void verifyCartQuantityUpdateRecalculatesTotals() {
-        HomePage homePage = new HomePage(driver());
+        HomePage homePage = new HomePage(getDriver());
 
         ProductPage productPage = homePage.openFirstProduct();
         productPage.selectRequiredOptionsIfPresent();
@@ -121,7 +121,7 @@ public class ECommerceTests extends AbstractTest {
 
     @Test
     public void verifyRemovingProductEmptiesTheCart() {
-        HomePage homePage = new HomePage(driver());
+        HomePage homePage = new HomePage(getDriver());
         ProductPage productPage = homePage.openFirstProduct();
 
         productPage.selectRequiredOptionsIfPresent();

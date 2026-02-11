@@ -14,7 +14,7 @@ public abstract class AbstractTest {
 
     private static final ThreadLocal<WebDriver> TL_DRIVER = new ThreadLocal<>();
 
-    protected WebDriver driver() {
+    protected WebDriver getDriver() {
         return TL_DRIVER.get();
     }
 
