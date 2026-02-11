@@ -14,7 +14,7 @@ import java.util.Set;
 
 public class ProductPage extends AbstractPage {
 
-    private static final By PROBE = By.cssSelector("#main h1");
+    private static final By PAGE_READY_LOCATOR = By.cssSelector("#main h1");
 
     @FindBy(css = "#main h1")
     private WebElement productTitle;
@@ -54,18 +54,18 @@ public class ProductPage extends AbstractPage {
     }
 
     public String getTitle() {
-        ensureFrontOfficeIframe(PROBE);
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
         return getText(productTitle, "productTitle");
     }
 
     public boolean isAddToCartVisibleAndEnabled() {
-        ensureFrontOfficeIframe(PROBE);
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
         wait.until(d -> addToCartButton.isDisplayed());
         return addToCartButton.isDisplayed() && addToCartButton.isEnabled();
     }
 
     public void selectRequiredOptionsIfPresent() {
-        ensureFrontOfficeIframe(PROBE);
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
 
         for (WebElement selectVariant : variantSelects) {
             Select select = new Select(selectVariant);
@@ -99,7 +99,7 @@ public class ProductPage extends AbstractPage {
     }
 
     public void addToCart() {
-        ensureFrontOfficeIframe(PROBE);
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
         click(addToCartButton, "addToCartButton");
     }
 
@@ -121,7 +121,7 @@ public class ProductPage extends AbstractPage {
     public int getCartCount() {
         WebElement el = getFirstAvailableCartCountElement();
         if (el == null) return 0;
-        return parseCount(textContent(el));
+        return parseCount(getTextContent(el));
     }
 
     public int waitForCartCountToIncrease(int initialCount) {

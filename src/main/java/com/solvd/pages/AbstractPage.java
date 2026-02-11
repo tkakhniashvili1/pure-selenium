@@ -30,40 +30,38 @@ public abstract class AbstractPage {
 
     protected void ensureFrontOfficeIframe(By probeBy) {
         try {
-            if (isAnyDisplayed(probeBy)) return;
-        } catch (WebDriverException ignored) {
+            if (isAnyElementDisplayed(probeBy)) return;
+        } catch (WebDriverException e) {
+            log.debug("Initial probe visibility check failed: {}", e.getMessage());
         }
 
         driver.switchTo().defaultContent();
 
-        wait.until(d -> !d.findElements(FRONT_OFFICE_IFRAME_BY).isEmpty());
-        WebElement frame = driver.findElements(FRONT_OFFICE_IFRAME_BY).get(0);
-
+        WebElement frame = wait.until(ExpectedConditions.presenceOfElementLocated(FRONT_OFFICE_IFRAME_BY));
         wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(frame));
-        wait.until(d -> isAnyDisplayed(probeBy));
+
+        wait.until(ExpectedConditions.visibilityOfElementLocated(probeBy));
     }
 
-    private boolean isAnyDisplayed(By by) {
-        List<WebElement> els = driver.findElements(by);
-        for (WebElement el : els) {
-            try {
-                if (el != null && el.isDisplayed()) return true;
-            } catch (StaleElementReferenceException ignored) {
-            }
-        }
-        return false;
+    private boolean isAnyElementDisplayed(By by) {
+        return driver.findElements(by).stream()
+                .anyMatch(el -> {
+                    try {
+                        return el.isDisplayed();
+                    } catch (StaleElementReferenceException ignored) {
+                        return false;
+                    }
+                });
     }
 
     protected void click(WebElement element, String name) {
         log.debug("click: {}", name);
-        wait.until(ExpectedConditions.visibilityOf(element));
+
+        wait.until(ExpectedConditions.elementToBeClickable(element));
         scrollIntoView(element);
 
         try {
-            wait.until(ExpectedConditions.elementToBeClickable(element)).click();
-        } catch (ElementClickInterceptedException e) {
-            log.debug("click fallback(js): {} ({})", name, e.getClass().getSimpleName());
-            jsClick(element);
+            element.click();
         } catch (ElementNotInteractableException e) {
             log.debug("click fallback(js): {} ({})", name, e.getClass().getSimpleName());
             jsClick(element);
@@ -82,27 +80,30 @@ public abstract class AbstractPage {
 
     protected void sendKeys(WebElement element, String name, CharSequence... keys) {
         log.debug("sendKeys: {}", name);
-        wait.until(ExpectedConditions.visibilityOf(element));
+        waitUntilVisible(element);
         element.sendKeys(keys);
     }
 
-    protected String getText(WebElement element, String name) {
-        wait.until(ExpectedConditions.visibilityOf(element));
-        String t = element.getText();
-        log.debug("getText: {} -> {}", name, t);
-        return t == null ? "" : t.trim();
+    protected String getText(WebElement element, String elementName) {
+        waitUntilVisible(element);
+        String text = element.getText();
+        log.debug("getText from element {}: {}", elementName, text);
+        return text == null ? "" : text.trim();
     }
 
-    protected String getAttribute(WebElement element, String name, String attr) {
-        wait.until(ExpectedConditions.visibilityOf(element));
-        String v = element.getAttribute(attr);
-        log.debug("getAttribute: {} [{}] -> {}", name, attr, v);
-        return v;
+    protected String getAttribute(WebElement element, String elementName, String attribute) {
+        waitUntilVisible(element);
+        String value = element.getAttribute(attribute);
+        log.debug("getAttribute [{}] from element {}: {}", attribute, elementName, value);
+        return value;
     }
 
-    protected String textContent(WebElement el) {
-        Object v = ((JavascriptExecutor) driver).executeScript("return arguments[0].textContent;", el);
-        return v == null ? "" : v.toString().trim();
+    protected String getTextContent(WebElement element) {
+        Object value = ((JavascriptExecutor) driver)
+                .executeScript("return arguments[0].textContent;", element);
+        String text = value == null ? "" : value.toString().trim();
+        log.debug("getTextContent: {}", text);
+        return text;
     }
 
     private void scrollIntoView(WebElement element) {
@@ -110,11 +111,17 @@ public abstract class AbstractPage {
             ((JavascriptExecutor) driver).executeScript(
                     "arguments[0].scrollIntoView({block:'center', inline:'nearest'});", element
             );
-        } catch (JavascriptException ignored) {
+            log.debug("Scrolled element into view: {}", element);
+        } catch (JavascriptException e) {
+            log.warn("Failed to scroll element into view: {}", e.getMessage());
         }
     }
 
     private void jsClick(WebElement element) {
         ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+    }
+
+    private void waitUntilVisible(WebElement element) {
+        wait.until(ExpectedConditions.visibilityOf(element));
     }
 }

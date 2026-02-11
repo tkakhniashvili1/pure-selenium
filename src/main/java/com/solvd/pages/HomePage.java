@@ -11,7 +11,7 @@ import java.util.List;
 
 public class HomePage extends AbstractPage {
 
-    private static final By PROBE = By.cssSelector("#search_widget input[name='s']");
+    private static final By PAGE_READY_LOCATOR = By.cssSelector("#search_widget input[name='s']");
 
     @FindBy(css = "#search_widget input[name='s']")
     private WebElement searchInput;
@@ -27,7 +27,7 @@ public class HomePage extends AbstractPage {
     }
 
     public SearchResultsPage search(String query) {
-        ensureFrontOfficeIframe(PROBE);
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
 
         click(searchInput, "searchInput");
         sendKeys(searchInput, "searchInput",
@@ -41,7 +41,7 @@ public class HomePage extends AbstractPage {
     }
 
     public String getSearchKeywordFromHome() {
-        ensureFrontOfficeIframe(PROBE);
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
 
         wait.until(d -> !productTitleLinks.isEmpty()
                 && !productTitleLinks.get(0).getText().trim().isEmpty());
@@ -56,7 +56,7 @@ public class HomePage extends AbstractPage {
     }
 
     public ProductPage openFirstProduct() {
-        ensureFrontOfficeIframe(PROBE);
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
 
         wait.until(d -> !productTitleLinks.isEmpty());
         WebElement first = productTitleLinks.stream()

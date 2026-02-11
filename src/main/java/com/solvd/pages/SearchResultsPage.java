@@ -13,7 +13,7 @@ import java.util.Locale;
 
 public class SearchResultsPage extends AbstractPage {
 
-    private static final By PROBE = By.cssSelector("#js-product-list");
+    private static final By PAGE_READY_LOCATOR = By.cssSelector("#js-product-list");
 
     @FindBy(css = "#js-product-list")
     private WebElement productList;
@@ -35,7 +35,7 @@ public class SearchResultsPage extends AbstractPage {
     }
 
     public boolean isDisplayed() {
-        ensureFrontOfficeIframe(PROBE);
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
         try {
             wait.until(d -> productList.isDisplayed());
             return true;
@@ -45,7 +45,7 @@ public class SearchResultsPage extends AbstractPage {
     }
 
     public boolean hasAnyProductTitleContaining(String keyword) {
-        ensureFrontOfficeIframe(PROBE);
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
         String k = keyword.toLowerCase(Locale.ROOT);
 
         return productTitles.stream()
@@ -55,14 +55,14 @@ public class SearchResultsPage extends AbstractPage {
     }
 
     public boolean isNoMatchesMessageDisplayed() {
-        ensureFrontOfficeIframe(PROBE);
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
         wait.until(d -> !noMatchesHeader.isEmpty() || !pageNotFoundSection.isEmpty() || !productCards.isEmpty());
         return noMatchesHeader.stream().anyMatch(WebElement::isDisplayed)
                 || pageNotFoundSection.stream().anyMatch(WebElement::isDisplayed);
     }
 
     public int getVisibleProductCardCount() {
-        ensureFrontOfficeIframe(PROBE);
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
         wait.until(d -> productCards.stream().anyMatch(WebElement::isDisplayed)
                 || noMatchesHeader.stream().anyMatch(WebElement::isDisplayed)
                 || pageNotFoundSection.stream().anyMatch(WebElement::isDisplayed));
@@ -81,19 +81,19 @@ public class SearchResultsPage extends AbstractPage {
     }
 
     public ProductPage openFirstDisplayedProduct() {
-        ensureFrontOfficeIframe(PROBE);
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
         WebElement first = firstVisibleProductTitle();
         click(first, "firstVisibleProductTitle");
         return new ProductPage(driver);
     }
 
     public String getFirstDisplayedProductTitle() {
-        ensureFrontOfficeIframe(PROBE);
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
         return firstVisibleProductTitle().getText().trim();
     }
 
     public List<String> getDisplayedProductTitles() {
-        ensureFrontOfficeIframe(PROBE);
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
         wait.until(d -> productTitles != null && !productTitles.isEmpty());
         return productTitles.stream()
                 .filter(WebElement::isDisplayed)
