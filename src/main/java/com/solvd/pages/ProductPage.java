@@ -104,31 +104,27 @@ public class ProductPage extends AbstractPage {
     }
 
     public int getModalItemsCount() {
-        ensureFrontOfficeIframe(PROBE);
         wait.until(d -> modalCartItemsLine.isDisplayed());
         return parseCount(getText(modalCartItemsLine, "modalCartItemsLine"));
     }
 
     public boolean isAddToCartModalDisplayed() {
-        ensureFrontOfficeIframe(PROBE);
         wait.until(d -> blockcartModal.isDisplayed());
         return blockcartModal.isDisplayed();
     }
 
     public String getModalProductName() {
-        ensureFrontOfficeIframe(PROBE);
-        return getText(modalProductName, "modalProductName");
+        wait.until(d -> modalProductName.isDisplayed());
+        return modalProductName.getText().trim();
     }
 
     public int getCartCount() {
-        ensureFrontOfficeIframe(PROBE);
         WebElement el = getFirstAvailableCartCountElement();
         if (el == null) return 0;
         return parseCount(textContent(el));
     }
 
     public int waitForCartCountToIncrease(int initialCount) {
-        ensureFrontOfficeIframe(PROBE);
         int expectedCount = initialCount + 1;
 
         wait.until(d -> {
@@ -143,7 +139,6 @@ public class ProductPage extends AbstractPage {
     }
 
     public CartPage openCartFromModal() {
-        ensureFrontOfficeIframe(PROBE);
         click(proceedToCheckoutButton, "proceedToCheckoutButton");
 
         driver.switchTo().defaultContent();

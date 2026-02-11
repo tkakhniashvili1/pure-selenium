@@ -107,15 +107,15 @@ public class ECommerceTests extends AbstractTest {
         BigDecimal subtotal1 = cartPage.getProductsSubtotal();
         BigDecimal total1 = cartPage.getTotal();
 
-        int targetQty = 2;
-        cartPage.increaseQuantityTo(targetQty);
+        int targetQuantity = 2;
+        cartPage.increaseQuantityTo(targetQuantity);
 
-        Assert.assertEquals(cartPage.getQuantity(), targetQty, "Quantity value was not updated.");
+        Assert.assertEquals(cartPage.getQuantity(), targetQuantity, "Quantity value was not updated.");
 
         BigDecimal subtotal2 = cartPage.getProductsSubtotal();
         BigDecimal total2 = cartPage.getTotal();
 
-        Assert.assertTrue(subtotal2.compareTo(subtotal1) > 0, "Products subtotal should increase after qty increase.");
+        Assert.assertTrue(subtotal2.compareTo(subtotal1) > 0, "Products subtotal should increase after quantity increase.");
         Assert.assertTrue(total2.compareTo(total1) > 0, "Total should increase after quantity increase.");
     }
 

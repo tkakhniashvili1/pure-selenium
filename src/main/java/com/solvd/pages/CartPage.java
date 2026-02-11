@@ -21,7 +21,7 @@ public class CartPage extends AbstractPage {
     private List<WebElement> cartItemQuantities;
 
     @FindBy(css = "button.js-increase-product-quantity")
-    private List<WebElement> qtyPlusButtons;
+    private List<WebElement> quantityPlusButtons;
 
     @FindBy(css = "#cart-subtotal-products .value, .cart-summary-line.cart-subtotal .value, .cart-subtotal .value")
     private List<WebElement> subtotal;
@@ -60,8 +60,8 @@ public class CartPage extends AbstractPage {
         ensureFrontOfficeIframe(PROBE);
         wait.until(d -> findFirstVisibleElement(cartItemQuantities) != null);
 
-        WebElement qty = findFirstVisibleElement(cartItemQuantities);
-        String v = (qty == null) ? null : getAttribute(qty, "cartQtyInput", "value");
+        WebElement quantity = findFirstVisibleElement(cartItemQuantities);
+        String v = (quantity == null) ? null : getAttribute(quantity, "cartQtyInput", "value");
         return (v == null || v.isBlank()) ? 0 : Integer.parseInt(v.trim());
     }
 
@@ -86,7 +86,7 @@ public class CartPage extends AbstractPage {
     public void increaseQuantityTo(int target) {
         ensureFrontOfficeIframe(PROBE);
         wait.until(d -> {
-            WebElement button = findFirstVisibleElement(qtyPlusButtons);
+            WebElement button = findFirstVisibleElement(quantityPlusButtons);
             return button != null && button.isEnabled();
         });
 
@@ -94,8 +94,8 @@ public class CartPage extends AbstractPage {
             int beforeQty = getQuantity();
             BigDecimal beforeSubtotal = getProductsSubtotal();
 
-            WebElement button = findFirstVisibleElement(qtyPlusButtons);
-            click(button, "qtyPlusButton");
+            WebElement button = findFirstVisibleElement(quantityPlusButtons);
+            click(button, "quantityPlusButton");
 
             wait.until(d ->
                     getQuantity() > beforeQty &&
