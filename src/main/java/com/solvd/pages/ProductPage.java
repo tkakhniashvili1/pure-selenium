@@ -1,17 +1,25 @@
 package com.solvd.pages;
 
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
+<<<<<<< HEAD
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebDriver;
+=======
+import org.openqa.selenium.*;
+>>>>>>> a8a2aee (Move code from pure selenium to Carina FW)
 import org.openqa.selenium.support.FindBy;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+<<<<<<< HEAD
 import static com.solvd.utils.ParseUtil.parseCount;
+=======
+public class ProductPage extends BasePage {
+>>>>>>> a8a2aee (Move code from pure selenium to Carina FW)
 
 public class ProductPage extends BasePage {
 
@@ -59,10 +67,18 @@ public class ProductPage extends BasePage {
     }
 
     public String getTitle() {
+<<<<<<< HEAD
+=======
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+>>>>>>> a8a2aee (Move code from pure selenium to Carina FW)
         return productTitle.getText().trim();
     }
 
     public boolean isAddToCartVisibleAndEnabled() {
+<<<<<<< HEAD
+=======
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+>>>>>>> a8a2aee (Move code from pure selenium to Carina FW)
         return addToCartButton.isDisplayed() && addToCartButton.isEnabled();
     }
 
@@ -70,6 +86,7 @@ public class ProductPage extends BasePage {
         for (ExtendedWebElement selectVariant : variantSelects) {
             if (selectVariant == null || !selectVariant.isVisible()) continue;
 
+<<<<<<< HEAD
             List<ExtendedWebElement> options = selectVariant.findExtendedWebElements(By.tagName("option"));
             for (ExtendedWebElement option : options) {
                 if (option == null || !option.isVisible() || !option.isEnabled()) continue;
@@ -92,11 +109,46 @@ public class ProductPage extends BasePage {
 
             if (!variantRadio.isSelected()) {
                 variantRadio.click();
+=======
+        for (ExtendedWebElement selectVariant : variantSelects) {
+            if (selectVariant == null || !selectVariant.isElementPresent(1)) continue;
+
+            Select select = new Select(selectVariant.getElement());
+            select.getOptions().stream()
+                    .filter(WebElement::isEnabled)
+                    .map(opt -> opt.getAttribute("value"))
+                    .filter(v -> v != null && !v.isBlank())
+                    .findFirst()
+                    .ifPresent(select::selectByValue);
+        }
+
+        Set<String> pickedNames = new HashSet<>();
+        for (ExtendedWebElement radioEl : variantRadios) {
+            if (radioEl == null || !radioEl.isElementPresent(1)) continue;
+
+            WebElement input = radioEl.getElement();
+            String name = input.getAttribute("name");
+            if (name == null || name.isBlank()) continue;
+            if (!pickedNames.add(name)) continue;
+            if (!input.isEnabled()) continue;
+
+            if (!input.isSelected()) {
+                try {
+                    WebElement label = input.findElement(By.xpath("./ancestor::label[1]"));
+                    label.click();
+                } catch (Exception e) {
+                    ((JavascriptExecutor) getDriver()).executeScript("arguments[0].click();", input);
+                }
+>>>>>>> a8a2aee (Move code from pure selenium to Carina FW)
             }
         }
     }
 
     public void addToCart() {
+<<<<<<< HEAD
+=======
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+>>>>>>> a8a2aee (Move code from pure selenium to Carina FW)
         addToCartButton.click();
     }
 
@@ -139,11 +191,27 @@ public class ProductPage extends BasePage {
         proceedToCheckoutButton.click();
 
         getDriver().switchTo().defaultContent();
+<<<<<<< HEAD
         CartPage cartPage = new CartPage(getDriver());
 
         return cartPage;
     }
 
+=======
+
+        CartPage cartPage = new CartPage(getDriver());
+        cartPage.waitForLoaded();
+        return cartPage;
+    }
+
+    private int parseCount(String raw) {
+        if (raw == null) return 0;
+        String digits = raw.replaceAll("[^0-9]", "");
+        if (digits.isEmpty()) return 0;
+        return Integer.parseInt(digits);
+    }
+
+>>>>>>> a8a2aee (Move code from pure selenium to Carina FW)
     private ExtendedWebElement getFirstAvailableCartCountElement() {
         if (desktopCartCount != null && !desktopCartCount.isEmpty()) return desktopCartCount.get(0);
         if (mobileCartCount != null && !mobileCartCount.isEmpty()) return mobileCartCount.get(0);

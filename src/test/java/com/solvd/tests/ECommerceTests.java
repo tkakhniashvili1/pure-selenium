@@ -1,5 +1,6 @@
 package com.solvd.tests;
 
+<<<<<<< HEAD
 import com.solvd.pages.CartPage;
 import com.solvd.pages.HomePage;
 import com.solvd.pages.ProductPage;
@@ -9,6 +10,11 @@ import com.zebrunner.carina.utils.R;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
+=======
+import com.solvd.pages.*;
+import com.zebrunner.carina.core.AbstractTest;
+import org.testng.Assert;
+>>>>>>> a8a2aee (Move code from pure selenium to Carina FW)
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
 

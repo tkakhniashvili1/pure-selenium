@@ -1,14 +1,23 @@
 package com.solvd.pages;
 
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
+<<<<<<< HEAD
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
+=======
+import org.openqa.selenium.*;
+>>>>>>> a8a2aee (Move code from pure selenium to Carina FW)
 import org.openqa.selenium.support.FindBy;
 
 import java.util.List;
 
 public class HomePage extends BasePage {
+<<<<<<< HEAD
+=======
+
+    private static final By PAGE_READY_LOCATOR = By.cssSelector("#search_widget input[name='s']");
+>>>>>>> a8a2aee (Move code from pure selenium to Carina FW)
 
     @FindBy(css = "#search_widget input[name='s']")
     private ExtendedWebElement searchInput;
@@ -34,6 +43,13 @@ public class HomePage extends BasePage {
         searchInput.getElement().clear();
         searchInput.type(query);
 
+<<<<<<< HEAD
+=======
+        searchInput.click();
+        searchInput.getElement().clear();
+        searchInput.type(query);
+
+>>>>>>> a8a2aee (Move code from pure selenium to Carina FW)
         if (searchSubmitButton.isPresent()) {
             searchSubmitButton.click();
         } else {
@@ -49,10 +65,22 @@ public class HomePage extends BasePage {
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException("No product titles"));
 
+<<<<<<< HEAD
         if (!first.isElementPresent(getDefaultWaitTimeout())) {
             throw new NoSuchElementException("No product titles");
         }
 
+=======
+        ExtendedWebElement first = productTitleLinks.stream()
+                .filter(e -> e.isElementPresent(1))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("No product titles"));
+
+        if (!first.isElementPresent(getDefaultWaitTimeout())) {
+            throw new NoSuchElementException("No product titles");
+        }
+
+>>>>>>> a8a2aee (Move code from pure selenium to Carina FW)
         String title = first.getText().trim();
 
         String[] tokens = title.split("[^A-Za-z0-9]+");
@@ -63,8 +91,15 @@ public class HomePage extends BasePage {
     }
 
     public ProductPage openFirstProduct() {
+<<<<<<< HEAD
         ExtendedWebElement first = productTitleLinks.stream()
                 .filter(e -> e.isElementPresent(3))
+=======
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+
+        ExtendedWebElement first = productTitleLinks.stream()
+                .filter(e -> e.isElementPresent(1))
+>>>>>>> a8a2aee (Move code from pure selenium to Carina FW)
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException("No displayed home product"));
 

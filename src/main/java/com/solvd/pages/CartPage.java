@@ -1,17 +1,26 @@
 package com.solvd.pages;
 
+<<<<<<< HEAD
 import com.solvd.utils.TimeConstants;
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
+=======
+import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
+import org.openqa.selenium.*;
+>>>>>>> a8a2aee (Move code from pure selenium to Carina FW)
 import org.openqa.selenium.support.FindBy;
 
 import java.math.BigDecimal;
 import java.util.List;
 
+<<<<<<< HEAD
 import static com.solvd.utils.ParseUtil.parseIntegerFromText;
 import static com.solvd.utils.ParseUtil.parseMoney;
+=======
+public class CartPage extends BasePage {
+>>>>>>> a8a2aee (Move code from pure selenium to Carina FW)
 
 public class CartPage extends BasePage {
 
@@ -50,10 +59,16 @@ public class CartPage extends BasePage {
         waitForPageOpened();
     }
 
+<<<<<<< HEAD
     public void waitForPageOpened() {
         ensureFrontOfficeIframeOnce(pageRoot);
         waitUntil(d -> findFirstVisibleElement(cartItems, emptyCartMessage) != null,
                 getDefaultWaitTimeout());
+=======
+    public void waitForLoaded() {
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        waitUntil(d -> findFirstVisibleElement(cartItems, emptyCartMessage) != null, getDefaultWaitTimeout());
+>>>>>>> a8a2aee (Move code from pure selenium to Carina FW)
     }
 
     public boolean isDisplayed() {
@@ -66,6 +81,7 @@ public class CartPage extends BasePage {
     }
 
     public int getQuantity() {
+<<<<<<< HEAD
         ExtendedWebElement quantityInput = findFirstVisibleElement(cartItemQuantities);
         if (quantityInput == null) {
             return 0;
@@ -98,15 +114,71 @@ public class CartPage extends BasePage {
             plusButton.click();
 
             waitUntil(d -> getQuantity() > currentQuantity, getDefaultWaitTimeout());
+=======
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+       waitUntil(d -> findFirstVisibleElement(cartItemQuantities) != null, getDefaultWaitTimeout());
+
+        ExtendedWebElement quantity = findFirstVisibleElement(cartItemQuantities);
+        String v = (quantity == null) ? null : quantity.getAttribute("value");
+        return (v == null || v.isBlank()) ? 0 : Integer.parseInt(v.trim());
+    }
+
+    public BigDecimal getProductsSubtotal() {
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+
+        ExtendedWebElement el = findFirstVisibleElement(subtotal);
+        if (el == null || !el.isElementPresent(getDefaultWaitTimeout())) return BigDecimal.ZERO;
+
+        return parseMoney(el.getText());
+    }
+
+    public BigDecimal getTotal() {
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+
+        waitUntil(d -> {
+            ExtendedWebElement el = findFirstVisibleElement(total);
+            return el != null && el.isElementPresent(1) && el.isDisplayed();
+        }, getDefaultWaitTimeout());
+
+        ExtendedWebElement el = findFirstVisibleElement(total);
+        if (el == null) return BigDecimal.ZERO;
+
+        return parseMoney(el.getText());
+    }
+
+    public void increaseQuantityTo(int target) {
+        waitForLoaded();
+
+        waitUntil(d -> findFirstVisibleElement(quantityPlusButtons) != null, getDefaultWaitTimeout());
+        waitUntil(d -> findFirstVisibleElement(cartItemQuantities) != null, getDefaultWaitTimeout());
+
+        while (true) {
+            int current = getQuantity();
+            if (current >= target) return;
+
+            ExtendedWebElement plus = findFirstVisibleElement(quantityPlusButtons);
+            if (plus == null || !plus.isEnabled()) throw new NoSuchElementException("Quantity + button not found/enabled");
+
+            plus.click();
+
+            int before = current;
+            waitUntil(d -> getQuantity() > before, getDefaultWaitTimeout());
+>>>>>>> a8a2aee (Move code from pure selenium to Carina FW)
         }
     }
 
     public int getCartLinesCount() {
+<<<<<<< HEAD
+=======
+        waitForLoaded();
+
+>>>>>>> a8a2aee (Move code from pure selenium to Carina FW)
         if (findFirstVisibleElement(emptyCartMessage) != null) return 0;
         return (int) cartItems.stream().filter(el -> el != null && el.isDisplayed()).count();
     }
 
     public void removeFirstLine() {
+<<<<<<< HEAD
         if (isEmptyCartMessageDisplayed()) {
             return;
         }
@@ -131,12 +203,41 @@ public class CartPage extends BasePage {
     }
 
     public int cartCountElement() {
+=======
+        waitForLoaded();
+
+        if (findFirstVisibleElement(emptyCartMessage) != null) return;
+
+        int before = getCartLinesCount();
+
+        waitUntil(d -> findFirstVisibleElement(removeButtons) != null, getDefaultWaitTimeout());
+        ExtendedWebElement remove = findFirstVisibleElement(removeButtons);
+        if (remove == null) throw new NoSuchElementException("Remove button not found");
+
+        remove.click();
+
+        waitUntil(d -> {
+            if (findFirstVisibleElement(emptyCartMessage) != null) return true;
+            return getCartLinesCount() < before;
+        }, getDefaultWaitTimeout());
+    }
+
+    public boolean isEmptyCartMessageDisplayed() {
+        waitForLoaded();
+        return findFirstVisibleElement(emptyCartMessage) != null;
+    }
+
+    public int getHeaderCartCount() {
+        waitForLoaded();
+
+>>>>>>> a8a2aee (Move code from pure selenium to Carina FW)
         ExtendedWebElement el = findFirstVisibleElement(cartCount);
         if (el == null) return 0;
 
         return parseIntegerFromText(el.getText());
     }
 
+<<<<<<< HEAD
     private final ExtendedWebElement findFirstVisibleElement(List<ExtendedWebElement>... groups) {
         final int timeoutSec = TimeConstants.SHORT_TIMEOUT_SEC;
 
@@ -146,6 +247,15 @@ public class CartPage extends BasePage {
             for (ExtendedWebElement el : group) {
                 if (el != null && el.isElementPresent(timeoutSec)) {
                     return el;
+=======
+    private ExtendedWebElement findFirstVisibleElement(List<ExtendedWebElement>... groups) {
+        for (List<ExtendedWebElement> g : groups) {
+            if (g == null) continue;
+            for (ExtendedWebElement el : g) {
+                try {
+                    if (el != null && el.isElementPresent(1) && el.isDisplayed()) return el;
+                } catch (Exception ignored) {
+>>>>>>> a8a2aee (Move code from pure selenium to Carina FW)
                 }
             }
         }
