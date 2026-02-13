@@ -1,10 +1,7 @@
 package com.solvd.pages;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.StaleElementReferenceException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.ui.Select;
 
@@ -12,42 +9,42 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class ProductPage extends AbstractPage {
+public class ProductPage extends BasePage {
 
     private static final By PAGE_READY_LOCATOR = By.cssSelector("#main h1");
 
     @FindBy(css = "#main h1")
-    private WebElement productTitle;
+    private ExtendedWebElement productTitle;
 
     @FindBy(css = "form#add-to-cart-or-refresh button[data-button-action='add-to-cart']")
-    private WebElement addToCartButton;
+    private ExtendedWebElement addToCartButton;
 
     @FindBy(css = ".product-variants select")
-    private List<WebElement> variantSelects;
+    private List<ExtendedWebElement> variantSelects;
 
     @FindBy(css = ".product-variants .color")
-    private List<WebElement> colorSwatches;
+    private List<ExtendedWebElement> colorSwatches;
 
     @FindBy(css = "#blockcart-modal .product-name")
-    private WebElement modalProductName;
+    private ExtendedWebElement modalProductName;
 
     @FindBy(css = "#blockcart-modal a.btn.btn-primary")
-    private WebElement proceedToCheckoutButton;
+    private ExtendedWebElement proceedToCheckoutButton;
 
     @FindBy(css = "#_desktop_cart .cart-products-count")
-    private List<WebElement> desktopCartCount;
+    private List<ExtendedWebElement> desktopCartCount;
 
     @FindBy(css = "#_mobile_cart .cart-products-count")
-    private List<WebElement> mobileCartCount;
+    private List<ExtendedWebElement> mobileCartCount;
 
     @FindBy(css = "#blockcart-modal .cart-content p.cart-products-count")
-    private WebElement modalCartItemsLine;
+    private ExtendedWebElement modalCartItemsLine;
 
     @FindBy(css = ".product-variants input[type='radio']")
-    private List<WebElement> variantRadios;
+    private List<ExtendedWebElement> variantRadios;
 
     @FindBy(css = "#blockcart-modal")
-    private WebElement blockcartModal;
+    private ExtendedWebElement blockcartModal;
 
     public ProductPage(WebDriver driver) {
         super(driver);
@@ -55,95 +52,96 @@ public class ProductPage extends AbstractPage {
 
     public String getTitle() {
         ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
-        return getText(productTitle, "productTitle");
+        return productTitle.getText().trim();
     }
 
     public boolean isAddToCartVisibleAndEnabled() {
         ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
-        wait.until(d -> addToCartButton.isDisplayed());
         return addToCartButton.isDisplayed() && addToCartButton.isEnabled();
     }
 
     public void selectRequiredOptionsIfPresent() {
         ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
 
-        for (WebElement selectVariant : variantSelects) {
-            Select select = new Select(selectVariant);
+        for (ExtendedWebElement selectVariant : variantSelects) {
+            if (selectVariant == null || !selectVariant.isElementPresent(1)) continue;
+
+            Select select = new Select(selectVariant.getElement());
             select.getOptions().stream()
-                    .filter(opt -> opt.isEnabled()
-                            && opt.getAttribute("value") != null
-                            && !opt.getAttribute("value").isBlank())
+                    .filter(WebElement::isEnabled)
+                    .map(opt -> opt.getAttribute("value"))
+                    .filter(v -> v != null && !v.isBlank())
                     .findFirst()
-                    .ifPresent(opt -> select.selectByValue(opt.getAttribute("value")));
+                    .ifPresent(select::selectByValue);
         }
 
         Set<String> pickedNames = new HashSet<>();
-        for (WebElement label : variantRadios) {
-            WebElement input;
-            try {
-                input = label.findElement(By.cssSelector("input[type='radio']"));
-            } catch (NoSuchElementException ignored) {
-                continue;
-            }
+        for (ExtendedWebElement radioEl : variantRadios) {
+            if (radioEl == null || !radioEl.isElementPresent(1)) continue;
 
+            WebElement input = radioEl.getElement();
             String name = input.getAttribute("name");
-            if (name != null && !name.isBlank() && input.isEnabled() && pickedNames.add(name)) {
-                click(label, "variantRadioLabel");
+            if (name == null || name.isBlank()) continue;
+            if (!pickedNames.add(name)) continue;
+            if (!input.isEnabled()) continue;
+
+            if (!input.isSelected()) {
+                try {
+                    WebElement label = input.findElement(By.xpath("./ancestor::label[1]"));
+                    label.click();
+                } catch (Exception e) {
+                    ((JavascriptExecutor) getDriver()).executeScript("arguments[0].click();", input);
+                }
             }
         }
-
-        colorSwatches.stream()
-                .filter(WebElement::isDisplayed)
-                .findFirst()
-                .ifPresent(swatch -> click(swatch, "colorSwatch"));
     }
 
     public void addToCart() {
         ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
-        click(addToCartButton, "addToCartButton");
+        addToCartButton.click();
     }
 
     public int getModalItemsCount() {
-        wait.until(d -> modalCartItemsLine.isDisplayed());
-        return parseCount(getText(modalCartItemsLine, "modalCartItemsLine"));
+        modalCartItemsLine.isElementPresent();
+        return parseCount(modalCartItemsLine.getText());
     }
 
     public boolean isAddToCartModalDisplayed() {
-        wait.until(d -> blockcartModal.isDisplayed());
+        blockcartModal.isElementPresent();
         return blockcartModal.isDisplayed();
     }
 
     public String getModalProductName() {
-        wait.until(d -> modalProductName.isDisplayed());
+        modalProductName.isElementPresent();
         return modalProductName.getText().trim();
     }
 
     public int getCartCount() {
-        WebElement el = getFirstAvailableCartCountElement();
+        ExtendedWebElement el = getFirstAvailableCartCountElement();
         if (el == null) return 0;
-        return parseCount(getTextContent(el));
+        return parseCount(el.getText());
     }
 
     public int waitForCartCountToIncrease(int initialCount) {
         int expectedCount = initialCount + 1;
 
-        wait.until(d -> {
+        waitUntil(d -> {
             try {
                 return getCartCount() >= expectedCount;
             } catch (StaleElementReferenceException | NoSuchElementException ignored) {
                 return false;
             }
-        });
+        }, getDefaultWaitTimeout());
 
         return getCartCount();
     }
 
     public CartPage openCartFromModal() {
-        click(proceedToCheckoutButton, "proceedToCheckoutButton");
+        proceedToCheckoutButton.click();
 
-        driver.switchTo().defaultContent();
+        getDriver().switchTo().defaultContent();
 
-        CartPage cartPage = new CartPage(driver);
+        CartPage cartPage = new CartPage(getDriver());
         cartPage.waitForLoaded();
         return cartPage;
     }
@@ -155,7 +153,7 @@ public class ProductPage extends AbstractPage {
         return Integer.parseInt(digits);
     }
 
-    private WebElement getFirstAvailableCartCountElement() {
+    private ExtendedWebElement getFirstAvailableCartCountElement() {
         if (desktopCartCount != null && !desktopCartCount.isEmpty()) return desktopCartCount.get(0);
         if (mobileCartCount != null && !mobileCartCount.isEmpty()) return mobileCartCount.get(0);
         return null;

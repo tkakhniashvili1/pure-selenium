@@ -1,34 +1,30 @@
 package com.solvd.pages;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.StaleElementReferenceException;
-import org.openqa.selenium.TimeoutException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.FindBy;
 
 import java.util.List;
 import java.util.Locale;
 
-public class SearchResultsPage extends AbstractPage {
+public class SearchResultsPage extends BasePage {
 
     private static final By PAGE_READY_LOCATOR = By.cssSelector("#js-product-list");
 
     @FindBy(css = "#js-product-list")
-    private WebElement productList;
+    private ExtendedWebElement productList;
 
     @FindBy(css = "#js-product-list .product-miniature")
-    private List<WebElement> productCards;
+    private List<ExtendedWebElement> productCards;
 
     @FindBy(css = "#js-product-list .product-title a")
-    private List<WebElement> productTitles;
+    private List<ExtendedWebElement> productTitles;
 
     @FindBy(id = "product-search-no-matches")
-    private List<WebElement> noMatchesHeader;
+    private List<ExtendedWebElement> noMatchesHeader;
 
     @FindBy(css = "#content.page-content.page-not-found")
-    private List<WebElement> pageNotFoundSection;
+    private List<ExtendedWebElement> pageNotFoundSection;
 
     public SearchResultsPage(WebDriver driver) {
         super(driver);
@@ -36,12 +32,7 @@ public class SearchResultsPage extends AbstractPage {
 
     public boolean isDisplayed() {
         ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
-        try {
-            wait.until(d -> productList.isDisplayed());
-            return true;
-        } catch (TimeoutException | NoSuchElementException | StaleElementReferenceException e) {
-            return isNoMatchesMessageDisplayed();
-        }
+        return productList.isElementPresent(getDefaultWaitTimeout()) || isNoMatchesMessageDisplayed();
     }
 
     public boolean hasAnyProductTitleContaining(String keyword) {
@@ -49,30 +40,30 @@ public class SearchResultsPage extends AbstractPage {
         String k = keyword.toLowerCase(Locale.ROOT);
 
         return productTitles.stream()
-                .map(WebElement::getText)
+                .map(ExtendedWebElement::getText)
                 .map(t -> t.toLowerCase(Locale.ROOT))
                 .anyMatch(t -> t.contains(k));
     }
 
     public boolean isNoMatchesMessageDisplayed() {
         ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
-        wait.until(d -> !noMatchesHeader.isEmpty() || !pageNotFoundSection.isEmpty() || !productCards.isEmpty());
-        return noMatchesHeader.stream().anyMatch(WebElement::isDisplayed)
-                || pageNotFoundSection.stream().anyMatch(WebElement::isDisplayed);
+        waitUntil(d -> !noMatchesHeader.isEmpty() || !pageNotFoundSection.isEmpty() || !productCards.isEmpty(), getDefaultWaitTimeout());
+        return noMatchesHeader.stream().anyMatch(ExtendedWebElement::isDisplayed)
+                || pageNotFoundSection.stream().anyMatch(ExtendedWebElement::isDisplayed);
     }
 
     public int getVisibleProductCardCount() {
         ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
-        wait.until(d -> productCards.stream().anyMatch(WebElement::isDisplayed)
-                || noMatchesHeader.stream().anyMatch(WebElement::isDisplayed)
-                || pageNotFoundSection.stream().anyMatch(WebElement::isDisplayed));
+        waitUntil(d -> productCards.stream().anyMatch(ExtendedWebElement::isDisplayed)
+                || noMatchesHeader.stream().anyMatch(ExtendedWebElement::isDisplayed)
+                || pageNotFoundSection.stream().anyMatch(ExtendedWebElement::isDisplayed), getDefaultWaitTimeout());
 
         if (isNoMatchesMessageDisplayed()) return 0;
 
         int retries = 2;
         for (int i = 0; i < retries; i++) {
             try {
-                return (int) productCards.stream().filter(WebElement::isDisplayed).count();
+                return (int) productCards.stream().filter(ExtendedWebElement::isDisplayed).count();
             } catch (StaleElementReferenceException e) {
                 if (i == retries - 1) throw e;
             }
@@ -82,9 +73,9 @@ public class SearchResultsPage extends AbstractPage {
 
     public ProductPage openFirstDisplayedProduct() {
         ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
-        WebElement first = firstVisibleProductTitle();
-        click(first, "firstVisibleProductTitle");
-        return new ProductPage(driver);
+        ExtendedWebElement first = firstVisibleProductTitle();
+        first.click();
+        return new ProductPage(getDriver());
     }
 
     public String getFirstDisplayedProductTitle() {
@@ -94,19 +85,19 @@ public class SearchResultsPage extends AbstractPage {
 
     public List<String> getDisplayedProductTitles() {
         ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
-        wait.until(d -> productTitles != null && !productTitles.isEmpty());
+        waitUntil(d -> productTitles != null && !productTitles.isEmpty(), getDefaultWaitTimeout());
         return productTitles.stream()
-                .filter(WebElement::isDisplayed)
-                .map(WebElement::getText)
+                .filter(ExtendedWebElement::isDisplayed)
+                .map(ExtendedWebElement::getText)
                 .map(String::trim)
                 .filter(s -> !s.isBlank())
                 .toList();
     }
 
-    private WebElement firstVisibleProductTitle() {
-        wait.until(d -> productTitles.stream().anyMatch(WebElement::isDisplayed));
+    private ExtendedWebElement firstVisibleProductTitle() {
+        waitUntil(d -> productTitles.stream().anyMatch(ExtendedWebElement::isDisplayed), getDefaultWaitTimeout());
         return productTitles.stream()
-                .filter(WebElement::isDisplayed)
+                .filter(ExtendedWebElement::isDisplayed)
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException("No visible product titles found"));
     }

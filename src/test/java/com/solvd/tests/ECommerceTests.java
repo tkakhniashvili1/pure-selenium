@@ -1,6 +1,7 @@
 package com.solvd.tests;
 
 import com.solvd.pages.*;
+import com.zebrunner.carina.core.AbstractTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

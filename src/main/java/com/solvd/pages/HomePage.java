@@ -1,26 +1,23 @@
 package com.solvd.pages;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.Keys;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.FindBy;
 
 import java.util.List;
 
-public class HomePage extends AbstractPage {
+public class HomePage extends BasePage {
 
     private static final By PAGE_READY_LOCATOR = By.cssSelector("#search_widget input[name='s']");
 
     @FindBy(css = "#search_widget input[name='s']")
-    private WebElement searchInput;
+    private ExtendedWebElement searchInput;
 
     @FindBy(css = "#search_widget button[type='submit']")
-    private WebElement searchSubmitButton;
+    private ExtendedWebElement searchSubmitButton;
 
     @FindBy(css = "#content .product-title a")
-    private List<WebElement> productTitleLinks;
+    private List<ExtendedWebElement> productTitleLinks;
 
     public HomePage(WebDriver driver) {
         super(driver);
@@ -29,24 +26,32 @@ public class HomePage extends AbstractPage {
     public SearchResultsPage search(String query) {
         ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
 
-        click(searchInput, "searchInput");
-        sendKeys(searchInput, "searchInput",
-                Keys.chord(Keys.COMMAND, "a"), Keys.BACK_SPACE, query);
+        searchInput.click();
+        searchInput.getElement().clear();
+        searchInput.type(query);
 
-        if (!clickIfPresent(searchSubmitButton, "searchSubmitButton")) {
-            sendKeys(searchInput, "searchInput", Keys.ENTER);
+        if (searchSubmitButton.isPresent()) {
+            searchSubmitButton.click();
+        } else {
+            searchInput.getElement().sendKeys(Keys.ENTER);
         }
 
-        return new SearchResultsPage(driver);
+        return new SearchResultsPage(getDriver());
     }
 
     public String getSearchKeywordFromHome() {
         ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
 
-        wait.until(d -> !productTitleLinks.isEmpty()
-                && !productTitleLinks.get(0).getText().trim().isEmpty());
+        ExtendedWebElement first = productTitleLinks.stream()
+                .filter(e -> e.isElementPresent(1))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("No product titles"));
 
-        String title = productTitleLinks.get(0).getText().trim();
+        if (!first.isElementPresent(getDefaultWaitTimeout())) {
+            throw new NoSuchElementException("No product titles");
+        }
+
+        String title = first.getText().trim();
 
         String[] tokens = title.split("[^A-Za-z0-9]+");
         for (String t : tokens) {
@@ -58,13 +63,16 @@ public class HomePage extends AbstractPage {
     public ProductPage openFirstProduct() {
         ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
 
-        wait.until(d -> !productTitleLinks.isEmpty());
-        WebElement first = productTitleLinks.stream()
-                .filter(WebElement::isDisplayed)
+        ExtendedWebElement first = productTitleLinks.stream()
+                .filter(e -> e.isElementPresent(1))
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException("No displayed home product"));
 
-        click(first, "firstHomeProduct");
-        return new ProductPage(driver);
+        if (!first.isElementPresent(getDefaultWaitTimeout())) {
+            throw new NoSuchElementException("No displayed home product");
+        }
+
+        first.click();
+        return new ProductPage(getDriver());
     }
 }
