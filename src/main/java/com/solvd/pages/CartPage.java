@@ -1,7 +1,10 @@
 package com.solvd.pages;
 
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
-import org.openqa.selenium.*;
+import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.FindBy;
 
 import java.math.BigDecimal;
@@ -55,7 +58,7 @@ public class CartPage extends BasePage {
 
     public int getQuantity() {
         ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
-       waitUntil(d -> findFirstVisibleElement(cartItemQuantities) != null, getDefaultWaitTimeout());
+        waitUntil(d -> findFirstVisibleElement(cartItemQuantities) != null, getDefaultWaitTimeout());
 
         ExtendedWebElement quantity = findFirstVisibleElement(cartItemQuantities);
         String v = (quantity == null) ? null : quantity.getAttribute("value");
@@ -64,25 +67,26 @@ public class CartPage extends BasePage {
 
     public BigDecimal getProductsSubtotal() {
         ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        waitUntil(d -> {
+            ExtendedWebElement e = findFirstVisibleElement(subtotal);
+            String t = (e == null) ? null : e.getAttribute("textContent");
+            return t != null && t.matches(".*\\d.*");
+        }, getDefaultWaitTimeout());
 
         ExtendedWebElement el = findFirstVisibleElement(subtotal);
-        if (el == null || !el.isElementPresent(getDefaultWaitTimeout())) return BigDecimal.ZERO;
-
-        return parseMoney(el.getText());
+        return parseMoney(el.getAttribute("textContent"));
     }
 
     public BigDecimal getTotal() {
         ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
-
         waitUntil(d -> {
-            ExtendedWebElement el = findFirstVisibleElement(total);
-            return el != null && el.isElementPresent(1) && el.isDisplayed();
+            ExtendedWebElement e = findFirstVisibleElement(total);
+            String t = (e == null) ? null : e.getAttribute("textContent");
+            return t != null && t.matches(".*\\d.*");
         }, getDefaultWaitTimeout());
 
         ExtendedWebElement el = findFirstVisibleElement(total);
-        if (el == null) return BigDecimal.ZERO;
-
-        return parseMoney(el.getText());
+        return parseMoney(el.getAttribute("textContent"));
     }
 
     public void increaseQuantityTo(int target) {
@@ -96,7 +100,8 @@ public class CartPage extends BasePage {
             if (current >= target) return;
 
             ExtendedWebElement plus = findFirstVisibleElement(quantityPlusButtons);
-            if (plus == null || !plus.isEnabled()) throw new NoSuchElementException("Quantity + button not found/enabled");
+            if (plus == null || !plus.isEnabled())
+                throw new NoSuchElementException("Quantity + button not found/enabled");
 
             plus.click();
 

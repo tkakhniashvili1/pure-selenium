@@ -1,8 +1,15 @@
 package com.solvd.tests;
 
-import com.solvd.pages.*;
+import com.solvd.pages.CartPage;
+import com.solvd.pages.HomePage;
+import com.solvd.pages.ProductPage;
+import com.solvd.pages.SearchResultsPage;
 import com.zebrunner.carina.core.AbstractTest;
+import com.zebrunner.carina.utils.R;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
@@ -10,6 +17,14 @@ import java.math.BigDecimal;
 import static com.solvd.utils.UiActions.normalizeText;
 
 public class ECommerceTests extends AbstractTest {
+
+    @Parameters({"capabilities.browserName"})
+    @BeforeMethod(alwaysRun = true)
+    public void setBrowserName(@Optional("") String browserName) {
+        if (browserName != null && !browserName.isBlank()) {
+            R.CONFIG.put("capabilities.browserName", browserName, true);
+        }
+    }
 
     @Test
     public void verifySuccessfulProductSearch() {
@@ -116,7 +131,7 @@ public class ECommerceTests extends AbstractTest {
         BigDecimal subtotal2 = cartPage.getProductsSubtotal();
         BigDecimal total2 = cartPage.getTotal();
 
-        Assert.assertTrue(subtotal2.compareTo(subtotal1) > 0, "Products subtotal should increase after quantity increase.");
+        Assert.assertTrue(subtotal2.compareTo(subtotal1) > 0, "Products subtotal should change after quantity increase.");
         Assert.assertTrue(total2.compareTo(total1) > 0, "Total should increase after quantity increase.");
     }
 
