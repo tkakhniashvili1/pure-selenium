@@ -36,17 +36,17 @@ public abstract class AbstractTest {
     @BeforeMethod(alwaysRun = true)
     public void setUpAndOpenBaseUrl(@Optional("chrome") String browser) {
         TL_BROWSER.set(browser);
-        WebDriver d = createDriver(browser);
+        WebDriver driver = createDriver(browser);
 
-        d.manage().window().maximize();
-        d.manage().timeouts().pageLoadTimeout(
+        driver.manage().window().maximize();
+        driver.manage().timeouts().pageLoadTimeout(
                 Duration.ofSeconds(Integer.parseInt(ConfigReader.getProperty("page.load.timeout")))
         );
 
-        TL_DRIVER.set(d);
+        TL_DRIVER.set(driver);
 
-        d.manage().deleteAllCookies();
-        d.get(ConfigReader.getProperty("base.url"));
+        driver.manage().deleteAllCookies();
+        driver.get(ConfigReader.getProperty("base.url"));
     }
 
     @AfterMethod(alwaysRun = true)

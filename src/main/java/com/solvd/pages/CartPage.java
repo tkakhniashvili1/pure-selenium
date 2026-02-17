@@ -9,6 +9,7 @@ import org.openqa.selenium.support.FindBy;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 public class CartPage extends AbstractPage {
 
@@ -144,7 +145,7 @@ public class CartPage extends AbstractPage {
             for (WebElement el : g) {
                 try {
                     if (el != null && el.isDisplayed()) return el;
-                } catch (StaleElementReferenceException | org.openqa.selenium.NoSuchElementException ignored) {
+                } catch (StaleElementReferenceException | NoSuchElementException ignored) {
                 }
             }
         }

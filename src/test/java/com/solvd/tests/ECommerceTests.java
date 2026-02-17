@@ -49,10 +49,10 @@ public class ECommerceTests extends AbstractTest {
         Assert.assertTrue(resultsPage.getVisibleProductCardCount() > 0,
                 "Search should return at least 1 product.");
 
-        String clickedTitle = resultsPage.getFirstDisplayedProductTitle();
+        String clickedTitle = resultsPage.getFirstVisibleProductTitle();
         Assert.assertFalse(normalizeText(clickedTitle).isEmpty(), "Clicked product title is empty.");
 
-        ProductPage productPage = resultsPage.openFirstDisplayedProduct();
+        ProductPage productPage = resultsPage.openFirstVisibleProduct();
 
         Assert.assertTrue(productPage.isAddToCartVisibleAndEnabled(),
                 "Add to cart button is not visible/enabled.");

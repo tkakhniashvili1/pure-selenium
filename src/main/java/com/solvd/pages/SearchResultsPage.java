@@ -80,14 +80,14 @@ public class SearchResultsPage extends AbstractPage {
         return 0;
     }
 
-    public ProductPage openFirstDisplayedProduct() {
+    public ProductPage openFirstVisibleProduct() {
         ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
         WebElement first = firstVisibleProductTitle();
         click(first, "firstVisibleProductTitle");
         return new ProductPage(driver);
     }
 
-    public String getFirstDisplayedProductTitle() {
+    public String getFirstVisibleProductTitle() {
         ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
         return firstVisibleProductTitle().getText().trim();
     }
