@@ -26,8 +26,13 @@ public class HomePage extends AbstractPage {
         super(driver);
     }
 
+    @Override
+    protected By getPageReadyLocator() {
+        return PAGE_READY_LOCATOR;
+    }
+
     public SearchResultsPage search(String query) {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        ensureLoaded();
 
         click(searchInput, "searchInput");
         sendKeys(searchInput, "searchInput",
@@ -41,7 +46,7 @@ public class HomePage extends AbstractPage {
     }
 
     public String getSearchKeywordFromHome() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        ensureLoaded();
 
         wait.until(d -> !productTitleLinks.isEmpty()
                 && !productTitleLinks.get(0).getText().trim().isEmpty());
@@ -56,7 +61,7 @@ public class HomePage extends AbstractPage {
     }
 
     public ProductPage openFirstProduct() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        ensureLoaded();
 
         wait.until(d -> !productTitleLinks.isEmpty());
         WebElement first = productTitleLinks.stream()

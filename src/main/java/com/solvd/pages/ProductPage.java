@@ -1,5 +1,6 @@
 package com.solvd.pages;
 
+import com.solvd.utils.ParseUtil;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.StaleElementReferenceException;
@@ -53,19 +54,24 @@ public class ProductPage extends AbstractPage {
         super(driver);
     }
 
+    @Override
+    protected By getPageReadyLocator() {
+        return PAGE_READY_LOCATOR;
+    }
+
     public String getTitle() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        ensureLoaded();
         return getText(productTitle, "productTitle");
     }
 
     public boolean isAddToCartVisibleAndEnabled() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        ensureLoaded();
         wait.until(d -> addToCartButton.isDisplayed());
         return addToCartButton.isDisplayed() && addToCartButton.isEnabled();
     }
 
     public void selectRequiredOptionsIfPresent() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        ensureLoaded();
 
         for (WebElement selectVariant : variantSelects) {
             Select select = new Select(selectVariant);
@@ -99,13 +105,13 @@ public class ProductPage extends AbstractPage {
     }
 
     public void addToCart() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        ensureLoaded();
         click(addToCartButton, "addToCartButton");
     }
 
     public int getModalItemsCount() {
         wait.until(d -> modalCartItemsLine.isDisplayed());
-        return parseCount(getText(modalCartItemsLine, "modalCartItemsLine"));
+        return ParseUtil.parseCount(getText(modalCartItemsLine, "modalCartItemsLine"));
     }
 
     public boolean isAddToCartModalDisplayed() {
@@ -121,7 +127,7 @@ public class ProductPage extends AbstractPage {
     public int getCartCount() {
         WebElement el = getFirstAvailableCartCountElement();
         if (el == null) return 0;
-        return parseCount(getTextContent(el));
+        return ParseUtil.parseCount(getTextContent(el));
     }
 
     public int waitForCartCountToIncrease(int initialCount) {
@@ -144,15 +150,8 @@ public class ProductPage extends AbstractPage {
         driver.switchTo().defaultContent();
 
         CartPage cartPage = new CartPage(driver);
-        cartPage.waitForLoaded();
+        cartPage.waitForPageOpened();
         return cartPage;
-    }
-
-    private int parseCount(String raw) {
-        if (raw == null) return 0;
-        String digits = raw.replaceAll("[^0-9]", "");
-        if (digits.isEmpty()) return 0;
-        return Integer.parseInt(digits);
     }
 
     private WebElement getFirstAvailableCartCountElement() {

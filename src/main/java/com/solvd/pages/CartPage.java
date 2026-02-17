@@ -42,14 +42,19 @@ public class CartPage extends AbstractPage {
         super(driver);
     }
 
-    public void waitForLoaded() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+    @Override
+    protected By getPageReadyLocator() {
+        return PAGE_READY_LOCATOR;
+    }
+
+    public void waitForPageOpened() {
+        ensureLoaded();
         wait.until(d -> findFirstVisibleElement(cartItems, emptyCartMessage) != null);
     }
 
     public boolean isDisplayed() {
         try {
-            waitForLoaded();
+            waitForPageOpened();
             return true;
         } catch (TimeoutException e) {
             return false;
@@ -57,7 +62,7 @@ public class CartPage extends AbstractPage {
     }
 
     public int getQuantity() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        ensureLoaded();
         wait.until(d -> findFirstVisibleElement(cartItemQuantities) != null);
 
         WebElement quantity = findFirstVisibleElement(cartItemQuantities);
@@ -66,7 +71,7 @@ public class CartPage extends AbstractPage {
     }
 
     public BigDecimal getProductsSubtotal() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        ensureLoaded();
         wait.until(d -> findFirstVisibleElement(subtotal) != null);
 
         WebElement el = findFirstVisibleElement(subtotal);
@@ -75,7 +80,7 @@ public class CartPage extends AbstractPage {
     }
 
     public BigDecimal getTotal() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        ensureLoaded();
         wait.until(d -> findFirstVisibleElement(total) != null);
 
         WebElement el = findFirstVisibleElement(total);
@@ -84,7 +89,7 @@ public class CartPage extends AbstractPage {
     }
 
     public void increaseQuantityTo(int target) {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        ensureLoaded();
         wait.until(d -> {
             WebElement button = findFirstVisibleElement(quantityPlusButtons);
             return button != null && button.isEnabled();
@@ -107,13 +112,13 @@ public class CartPage extends AbstractPage {
     }
 
     public int getCartLinesCount() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        ensureLoaded();
         if (findFirstVisibleElement(emptyCartMessage) != null) return 0;
         return (int) cartItems.stream().filter(el -> el != null && el.isDisplayed()).count();
     }
 
     public void removeFirstLine() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        ensureLoaded();
         wait.until(d -> findFirstVisibleElement(cartItems, emptyCartMessage) != null);
 
         wait.until(d -> {
@@ -128,12 +133,12 @@ public class CartPage extends AbstractPage {
     }
 
     public boolean isEmptyCartMessageDisplayed() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        ensureLoaded();
         return findFirstVisibleElement(emptyCartMessage) != null;
     }
 
     public int getHeaderCartCount() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        ensureLoaded();
         WebElement el = findFirstVisibleElement(cartCount);
         return (el == null) ? 0 : parseIntegerFromText(getTextContent(el));
     }
