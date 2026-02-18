@@ -33,13 +33,24 @@ public class SearchResultsPage extends BasePage {
         super(driver);
     }
 
+    public void waitForPageOpened() {
+        ensureFrontOfficeIframeOnce(PAGE_READY_LOCATOR);
+
+        waitUntil(d ->
+                        (productList != null && productList.isElementPresent(1)) ||
+                                (!productCards.isEmpty()) ||
+                                (!noMatchesHeader.isEmpty()) ||
+                                (!pageNotFoundSection.isEmpty()),
+                getDefaultWaitTimeout());
+    }
+
     public boolean isDisplayed() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        waitForPageOpened();
         return productList.isElementPresent(getDefaultWaitTimeout()) || isNoMatchesMessageDisplayed();
     }
 
     public boolean hasAnyProductTitleContaining(String keyword) {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        waitForPageOpened();
         String k = keyword.toLowerCase(Locale.ROOT);
 
         return productTitles.stream()
@@ -49,14 +60,14 @@ public class SearchResultsPage extends BasePage {
     }
 
     public boolean isNoMatchesMessageDisplayed() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        waitForPageOpened();
         waitUntil(d -> !noMatchesHeader.isEmpty() || !pageNotFoundSection.isEmpty() || !productCards.isEmpty(), getDefaultWaitTimeout());
         return noMatchesHeader.stream().anyMatch(ExtendedWebElement::isDisplayed)
                 || pageNotFoundSection.stream().anyMatch(ExtendedWebElement::isDisplayed);
     }
 
     public int getVisibleProductCardCount() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        waitForPageOpened();
         waitUntil(d -> productCards.stream().anyMatch(ExtendedWebElement::isDisplayed)
                 || noMatchesHeader.stream().anyMatch(ExtendedWebElement::isDisplayed)
                 || pageNotFoundSection.stream().anyMatch(ExtendedWebElement::isDisplayed), getDefaultWaitTimeout());
@@ -74,20 +85,20 @@ public class SearchResultsPage extends BasePage {
         return 0;
     }
 
-    public ProductPage openFirstDisplayedProduct() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
-        ExtendedWebElement first = firstVisibleProductTitle();
+    public ProductPage openFirstVisibleProduct() {
+        waitForPageOpened();
+        ExtendedWebElement first = findFirstVisibleProductTitle();
         first.click();
         return new ProductPage(getDriver());
     }
 
-    public String getFirstDisplayedProductTitle() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
-        return firstVisibleProductTitle().getText().trim();
+    public String getFirstVisibleProductTitle() {
+        waitForPageOpened();
+        return findFirstVisibleProductTitle().getText().trim();
     }
 
-    public List<String> getDisplayedProductTitles() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+    public List<String> getVisibleProductTitles() {
+        waitForPageOpened();
         waitUntil(d -> productTitles != null && !productTitles.isEmpty(), getDefaultWaitTimeout());
         return productTitles.stream()
                 .filter(ExtendedWebElement::isDisplayed)
@@ -97,11 +108,23 @@ public class SearchResultsPage extends BasePage {
                 .toList();
     }
 
-    private ExtendedWebElement firstVisibleProductTitle() {
-        waitUntil(d -> productTitles.stream().anyMatch(ExtendedWebElement::isDisplayed), getDefaultWaitTimeout());
+    private ExtendedWebElement findFirstVisibleProductTitle() {
+        long timeoutSec = getDefaultWaitTimeout().getSeconds();
+
+        waitUntil(d -> productTitles.stream().anyMatch(e -> isVisibleSafe(e, timeoutSec)), timeoutSec);
+
         return productTitles.stream()
-                .filter(ExtendedWebElement::isDisplayed)
+                .filter(e -> isVisibleSafe(e, timeoutSec))
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException("No visible product titles found"));
+    }
+
+    private boolean isVisibleSafe(ExtendedWebElement element, long timeoutSec) {
+        if (element == null) return false;
+        try {
+            return element.isElementPresent(timeoutSec) && element.isDisplayed();
+        } catch (StaleElementReferenceException ignored) {
+            return false;
+        }
     }
 }

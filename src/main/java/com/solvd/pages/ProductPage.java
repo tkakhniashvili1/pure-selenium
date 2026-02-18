@@ -9,6 +9,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.solvd.utils.ParseUtil.parseCount;
+
 public class ProductPage extends BasePage {
 
     private static final By PAGE_READY_LOCATOR = By.cssSelector("#main h1");
@@ -50,18 +52,23 @@ public class ProductPage extends BasePage {
         super(driver);
     }
 
+    public void waitForPageOpened() {
+        ensureFrontOfficeIframeOnce(PAGE_READY_LOCATOR);
+        productTitle.isElementPresent(getDefaultWaitTimeout());
+    }
+
     public String getTitle() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        waitForPageOpened();
         return productTitle.getText().trim();
     }
 
     public boolean isAddToCartVisibleAndEnabled() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        waitForPageOpened();
         return addToCartButton.isDisplayed() && addToCartButton.isEnabled();
     }
 
     public void selectRequiredOptionsIfPresent() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        waitForPageOpened();
 
         for (ExtendedWebElement selectVariant : variantSelects) {
             if (selectVariant == null || !selectVariant.isElementPresent(1)) continue;
@@ -97,7 +104,7 @@ public class ProductPage extends BasePage {
     }
 
     public void addToCart() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        waitForPageOpened();
         addToCartButton.click();
     }
 
@@ -142,15 +149,8 @@ public class ProductPage extends BasePage {
         getDriver().switchTo().defaultContent();
 
         CartPage cartPage = new CartPage(getDriver());
-        cartPage.waitForLoaded();
+        cartPage.waitForPageOpened();
         return cartPage;
-    }
-
-    private int parseCount(String raw) {
-        if (raw == null) return 0;
-        String digits = raw.replaceAll("[^0-9]", "");
-        if (digits.isEmpty()) return 0;
-        return Integer.parseInt(digits);
     }
 
     private ExtendedWebElement getFirstAvailableCartCountElement() {

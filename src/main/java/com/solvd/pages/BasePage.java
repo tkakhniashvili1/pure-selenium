@@ -9,68 +9,92 @@ public abstract class BasePage extends AbstractPage {
     private static final By FRONT_OFFICE_IFRAME_BY =
             By.cssSelector("iframe#framelive, iframe.framelive, iframe[name='framelive']");
 
+    private boolean frontOfficeIframeEnsured = false;
+
     public BasePage(WebDriver driver) {
         super(driver);
     }
 
     protected void ensureFrontOfficeIframe(By probeBy) {
-        WebDriver d = getDriver();
+        WebDriver driver = getDriver();
 
-        openBaseUrlIfNeeded(d);
+        openBaseUrlIfNeeded(driver);
 
-        d.switchTo().defaultContent();
+        driver.switchTo().defaultContent();
 
-        if (isAnyElementDisplayed(d, probeBy)) return;
+        if (isAnyElementDisplayed(driver, probeBy)) return;
 
         long timeout = getDefaultWaitTimeout().getSeconds();
 
-        waitUntil(driver ->
-                        isAnyElementDisplayed(driver, probeBy) ||
-                                !driver.findElements(FRONT_OFFICE_IFRAME_BY).isEmpty(),
+        waitUntil(d ->
+                        isAnyElementDisplayed(d, probeBy) ||
+                                !d.findElements(FRONT_OFFICE_IFRAME_BY).isEmpty(),
                 timeout
         );
 
-        if (isAnyElementDisplayed(d, probeBy)) return;
+        if (isAnyElementDisplayed(driver, probeBy)) return;
 
-        waitUntil(driver -> {
+        waitUntil(d -> {
             try {
-                WebElement iframe = driver.findElement(FRONT_OFFICE_IFRAME_BY);
-                driver.switchTo().frame(iframe);
+                WebElement iframe = d.findElement(FRONT_OFFICE_IFRAME_BY);
+                d.switchTo().frame(iframe);
                 return true;
             } catch (NoSuchElementException | StaleElementReferenceException e) {
-                driver.switchTo().defaultContent();
+                d.switchTo().defaultContent();
                 return false;
             }
         }, timeout);
 
-        waitUntil(driver -> isAnyElementDisplayed(driver, probeBy), timeout);
+        waitUntil(d -> isAnyElementDisplayed(d, probeBy), timeout);
     }
 
-    private void openBaseUrlIfNeeded(WebDriver d) {
+    private void openBaseUrlIfNeeded(WebDriver driver) {
         String baseUrl = Configuration.getRequired("url");
 
-        String cur;
+        String currentUrl;
         try {
-            cur = d.getCurrentUrl();
+            currentUrl = driver.getCurrentUrl();
         } catch (Exception e) {
-            cur = null;
+            currentUrl = null;
         }
 
-        if (cur == null || cur.isBlank() || cur.equals("about:blank") || cur.startsWith("data:")) {
-            d.get(baseUrl);
+        if (currentUrl == null || currentUrl.isBlank() || currentUrl.equals("about:blank") || currentUrl.startsWith("data:")) {
+            driver.get(baseUrl);
         }
     }
 
-    private boolean isAnyElementDisplayed(WebDriver d, By by) {
+    private boolean isAnyElementDisplayed(WebDriver driver, By by) {
         try {
-            for (WebElement el : d.findElements(by)) {
+            for (WebElement element : driver.findElements(by)) {
                 try {
-                    if (el != null && el.isDisplayed()) return true;
+                    if (element != null && element.isDisplayed()) return true;
                 } catch (StaleElementReferenceException ignored) {
                 }
             }
         } catch (WebDriverException ignored) {
         }
         return false;
+    }
+
+    protected final void ensureFrontOfficeIframeOnce(By probeBy) {
+        if (frontOfficeIframeEnsured && (isInsideIframe() || isAnyElementDisplayed(getDriver(), probeBy))) {
+            return;
+        }
+
+        ensureFrontOfficeIframe(probeBy);
+        frontOfficeIframeEnsured = true;
+    }
+
+    protected final void resetFrontOfficeIframeOnce() {
+        frontOfficeIframeEnsured = false;
+    }
+
+    private boolean isInsideIframe() {
+        try {
+            return Boolean.TRUE.equals(((JavascriptExecutor) getDriver())
+                    .executeScript("return window.self !== window.top;"));
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

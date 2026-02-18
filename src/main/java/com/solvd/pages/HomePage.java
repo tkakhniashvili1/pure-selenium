@@ -26,8 +26,13 @@ public class HomePage extends BasePage {
         super(driver);
     }
 
+    public void waitForPageOpened() {
+        ensureFrontOfficeIframeOnce(PAGE_READY_LOCATOR);
+        searchInput.isElementPresent(getDefaultWaitTimeout());
+    }
+
     public SearchResultsPage search(String query) {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        waitForPageOpened();
 
         searchInput.click();
         searchInput.getElement().clear();
@@ -43,7 +48,7 @@ public class HomePage extends BasePage {
     }
 
     public String getSearchKeywordFromHome() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        waitForPageOpened();
 
         ExtendedWebElement first = productTitleLinks.stream()
                 .filter(e -> e.isElementPresent(1))
@@ -64,7 +69,7 @@ public class HomePage extends BasePage {
     }
 
     public ProductPage openFirstProduct() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        waitForPageOpened();
 
         ExtendedWebElement first = productTitleLinks.stream()
                 .filter(e -> e.isElementPresent(1))
