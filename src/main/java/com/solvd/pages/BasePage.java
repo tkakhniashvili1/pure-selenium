@@ -85,10 +85,6 @@ public abstract class BasePage extends AbstractPage {
         frontOfficeIframeEnsured = true;
     }
 
-    protected final void resetFrontOfficeIframeOnce() {
-        frontOfficeIframeEnsured = false;
-    }
-
     private boolean isInsideIframe() {
         try {
             return Boolean.TRUE.equals(((JavascriptExecutor) getDriver())
