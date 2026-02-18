@@ -1,24 +1,6 @@
 package com.solvd.pages;
 
 import com.zebrunner.carina.utils.config.Configuration;
-<<<<<<< HEAD
-import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
-import com.zebrunner.carina.webdriver.gui.AbstractPage;
-import org.openqa.selenium.StaleElementReferenceException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebDriverException;
-import org.openqa.selenium.support.FindBy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public abstract class BasePage extends AbstractPage {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(BasePage.class);
-    private boolean frontOfficeIframeEnsured = false;
-
-    @FindBy(css = "iframe#framelive, iframe.framelive, iframe[name='framelive']")
-    private ExtendedWebElement frontOfficeIframe;
-=======
 import com.zebrunner.carina.webdriver.gui.AbstractPage;
 import org.openqa.selenium.*;
 
@@ -26,45 +8,54 @@ public abstract class BasePage extends AbstractPage {
 
     private static final By FRONT_OFFICE_IFRAME_BY =
             By.cssSelector("iframe#framelive, iframe.framelive, iframe[name='framelive']");
->>>>>>> a8a2aee (Move code from pure selenium to Carina FW)
+
+    private boolean frontOfficeIframeEnsured = false;
 
     public BasePage(WebDriver driver) {
         super(driver);
     }
 
-<<<<<<< HEAD
-    protected void ensureFrontOfficeIframe(ExtendedWebElement probeElement) {
+    protected void ensureFrontOfficeIframe(By probeBy) {
         WebDriver driver = getDriver();
+
         openBaseUrlIfNeeded(driver);
+
         driver.switchTo().defaultContent();
+
+        if (isAnyElementDisplayed(driver, probeBy)) return;
 
         long timeout = getDefaultWaitTimeout().getSeconds();
 
+        waitUntil(d ->
+                        isAnyElementDisplayed(d, probeBy) ||
+                                !d.findElements(FRONT_OFFICE_IFRAME_BY).isEmpty(),
+                timeout
+        );
+
+        if (isAnyElementDisplayed(driver, probeBy)) return;
+
         waitUntil(d -> {
-            if (isAnyElementDisplayed(probeElement)) return true;
-
-            if (frontOfficeIframe.isPresent()) {
-                try {
-                    d.switchTo().frame(frontOfficeIframe.getElement());
-                    return isAnyElementDisplayed(probeElement);
-                } catch (StaleElementReferenceException e) {
-                    d.switchTo().defaultContent();
-                    return false;
-                }
+            try {
+                WebElement iframe = d.findElement(FRONT_OFFICE_IFRAME_BY);
+                d.switchTo().frame(iframe);
+                return true;
+            } catch (NoSuchElementException | StaleElementReferenceException e) {
+                d.switchTo().defaultContent();
+                return false;
             }
-
-            return false;
         }, timeout);
+
+        waitUntil(d -> isAnyElementDisplayed(d, probeBy), timeout);
     }
 
     private void openBaseUrlIfNeeded(WebDriver driver) {
         String baseUrl = Configuration.getRequired("url");
 
-        String currentUrl = null;
+        String currentUrl;
         try {
             currentUrl = driver.getCurrentUrl();
-        } catch (WebDriverException e) {
-            LOGGER.warn("Cannot get current URL, will navigate to base URL", e);
+        } catch (Exception e) {
+            currentUrl = null;
         }
 
         if (currentUrl == null || currentUrl.isBlank() || currentUrl.equals("about:blank") || currentUrl.startsWith("data:")) {
@@ -72,77 +63,11 @@ public abstract class BasePage extends AbstractPage {
         }
     }
 
-    private boolean isAnyElementDisplayed(ExtendedWebElement... elements) {
-        for (ExtendedWebElement element : elements) {
-            if (element.isVisible()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    protected final void ensureFrontOfficeIframeOnce(ExtendedWebElement probeElement) {
-        if (frontOfficeIframeEnsured && probeElement != null && probeElement.isElementPresent(1)) {
-            return;
-        }
-
-        ensureFrontOfficeIframe(probeElement);
-        frontOfficeIframeEnsured = true;
-    }
-=======
-    protected void ensureFrontOfficeIframe(By probeBy) {
-        WebDriver d = getDriver();
-
-        openBaseUrlIfNeeded(d);
-
-        d.switchTo().defaultContent();
-
-        if (isAnyElementDisplayed(d, probeBy)) return;
-
-        long timeout = getDefaultWaitTimeout().getSeconds();
-
-        waitUntil(driver ->
-                        isAnyElementDisplayed(driver, probeBy) ||
-                                !driver.findElements(FRONT_OFFICE_IFRAME_BY).isEmpty(),
-                timeout
-        );
-
-        if (isAnyElementDisplayed(d, probeBy)) return;
-
-        waitUntil(driver -> {
-            try {
-                WebElement iframe = driver.findElement(FRONT_OFFICE_IFRAME_BY);
-                driver.switchTo().frame(iframe);
-                return true;
-            } catch (NoSuchElementException | StaleElementReferenceException e) {
-                driver.switchTo().defaultContent();
-                return false;
-            }
-        }, timeout);
-
-        waitUntil(driver -> isAnyElementDisplayed(driver, probeBy), timeout);
-    }
-
-    private void openBaseUrlIfNeeded(WebDriver d) {
-        String baseUrl = Configuration.getRequired("url");
-
-        String cur;
+    private boolean isAnyElementDisplayed(WebDriver driver, By by) {
         try {
-            cur = d.getCurrentUrl();
-        } catch (Exception e) {
-            cur = null;
-        }
-
-        if (cur == null || cur.isBlank() || cur.equals("about:blank") || cur.startsWith("data:")) {
-            d.get(baseUrl);
-        }
-    }
-
-    private boolean isAnyElementDisplayed(WebDriver d, By by) {
-        try {
-            for (WebElement el : d.findElements(by)) {
+            for (WebElement element : driver.findElements(by)) {
                 try {
-                    if (el != null && el.isDisplayed()) return true;
+                    if (element != null && element.isDisplayed()) return true;
                 } catch (StaleElementReferenceException ignored) {
                 }
             }
@@ -150,5 +75,26 @@ public abstract class BasePage extends AbstractPage {
         }
         return false;
     }
->>>>>>> a8a2aee (Move code from pure selenium to Carina FW)
+
+    protected final void ensureFrontOfficeIframeOnce(By probeBy) {
+        if (frontOfficeIframeEnsured && (isInsideIframe() || isAnyElementDisplayed(getDriver(), probeBy))) {
+            return;
+        }
+
+        ensureFrontOfficeIframe(probeBy);
+        frontOfficeIframeEnsured = true;
+    }
+
+    protected final void resetFrontOfficeIframeOnce() {
+        frontOfficeIframeEnsured = false;
+    }
+
+    private boolean isInsideIframe() {
+        try {
+            return Boolean.TRUE.equals(((JavascriptExecutor) getDriver())
+                    .executeScript("return window.self !== window.top;"));
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

@@ -38,7 +38,7 @@ public class ECommerceTests extends AbstractTest {
         int count = resultsPage.getVisibleProductCardCount();
 
         Assert.assertTrue(count > 0, "Number of displayed product cards should be > 0");
-        resultsPage.getDisplayedProductTitles().forEach(System.out::println);
+        resultsPage.getVisibleProductTitles().forEach(System.out::println);
         Assert.assertTrue(resultsPage.hasAnyProductTitleContaining(query), "At least one product title should contain '" + query);
     }
 
@@ -65,10 +65,10 @@ public class ECommerceTests extends AbstractTest {
         Assert.assertTrue(resultsPage.getVisibleProductCardCount() > 0,
                 "Search should return at least 1 product.");
 
-        String clickedTitle = resultsPage.getFirstDisplayedProductTitle();
+        String clickedTitle = resultsPage.getFirstVisibleProductTitle();
         Assert.assertFalse(normalizeText(clickedTitle).isEmpty(), "Clicked product title is empty.");
 
-        ProductPage productPage = resultsPage.openFirstDisplayedProduct();
+        ProductPage productPage = resultsPage.openFirstVisibleProduct();
 
         Assert.assertTrue(productPage.isAddToCartVisibleAndEnabled(),
                 "Add to cart button is not visible/enabled.");
@@ -136,7 +136,7 @@ public class ECommerceTests extends AbstractTest {
     }
 
     @Test
-    public void verifyRemovingProductEmptiesTheCart() {
+    public void verifyCartIsEmptyAfterRemovingLastProduct() {
         HomePage homePage = new HomePage(getDriver());
         ProductPage productPage = homePage.openFirstProduct();
 

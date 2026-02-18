@@ -42,14 +42,15 @@ public class CartPage extends BasePage {
         super(driver);
     }
 
-    public void waitForLoaded() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
-        waitUntil(d -> findFirstVisibleElement(cartItems, emptyCartMessage) != null, getDefaultWaitTimeout());
+    public void waitForPageOpened() {
+        ensureFrontOfficeIframeOnce(PAGE_READY_LOCATOR);
+        waitUntil(d -> findFirstVisibleElement(cartItems, emptyCartMessage) != null,
+                getDefaultWaitTimeout());
     }
 
     public boolean isDisplayed() {
         try {
-            waitForLoaded();
+            waitForPageOpened();
             return true;
         } catch (TimeoutException e) {
             return false;
@@ -57,7 +58,7 @@ public class CartPage extends BasePage {
     }
 
     public int getQuantity() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        waitForPageOpened();
         waitUntil(d -> findFirstVisibleElement(cartItemQuantities) != null, getDefaultWaitTimeout());
 
         ExtendedWebElement quantity = findFirstVisibleElement(cartItemQuantities);
@@ -66,7 +67,7 @@ public class CartPage extends BasePage {
     }
 
     public BigDecimal getProductsSubtotal() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        waitForPageOpened();
         waitUntil(d -> {
             ExtendedWebElement e = findFirstVisibleElement(subtotal);
             String t = (e == null) ? null : e.getAttribute("textContent");
@@ -78,7 +79,7 @@ public class CartPage extends BasePage {
     }
 
     public BigDecimal getTotal() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        waitForPageOpened();
         waitUntil(d -> {
             ExtendedWebElement e = findFirstVisibleElement(total);
             String t = (e == null) ? null : e.getAttribute("textContent");
@@ -90,7 +91,7 @@ public class CartPage extends BasePage {
     }
 
     public void increaseQuantityTo(int target) {
-        waitForLoaded();
+        waitForPageOpened();
 
         waitUntil(d -> findFirstVisibleElement(quantityPlusButtons) != null, getDefaultWaitTimeout());
         waitUntil(d -> findFirstVisibleElement(cartItemQuantities) != null, getDefaultWaitTimeout());
@@ -111,14 +112,14 @@ public class CartPage extends BasePage {
     }
 
     public int getCartLinesCount() {
-        waitForLoaded();
+        waitForPageOpened();
 
         if (findFirstVisibleElement(emptyCartMessage) != null) return 0;
         return (int) cartItems.stream().filter(el -> el != null && el.isDisplayed()).count();
     }
 
     public void removeFirstLine() {
-        waitForLoaded();
+        waitForPageOpened();
 
         if (findFirstVisibleElement(emptyCartMessage) != null) return;
 
@@ -137,12 +138,12 @@ public class CartPage extends BasePage {
     }
 
     public boolean isEmptyCartMessageDisplayed() {
-        waitForLoaded();
+        waitForPageOpened();
         return findFirstVisibleElement(emptyCartMessage) != null;
     }
 
     public int getHeaderCartCount() {
-        waitForLoaded();
+        waitForPageOpened();
 
         ExtendedWebElement el = findFirstVisibleElement(cartCount);
         if (el == null) return 0;
