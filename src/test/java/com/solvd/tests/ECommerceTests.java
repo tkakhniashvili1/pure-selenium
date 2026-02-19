@@ -1,9 +1,9 @@
 package com.solvd.tests;
 
-import com.solvd.pages.CartPage;
-import com.solvd.pages.HomePage;
-import com.solvd.pages.ProductPage;
-import com.solvd.pages.SearchResultsPage;
+import com.solvd.pages.common.CartPageBase;
+import com.solvd.pages.common.HomePageBase;
+import com.solvd.pages.common.ProductPageBase;
+import com.solvd.pages.common.SearchResultsPageBase;
 import com.zebrunner.carina.core.AbstractTest;
 import com.zebrunner.carina.utils.R;
 import org.testng.Assert;
@@ -28,10 +28,10 @@ public class ECommerceTests extends AbstractTest {
 
     @Test
     public void verifySuccessfulProductSearch() {
-        HomePage homePage = new HomePage(getDriver());
+        HomePageBase homePage = initPage(getDriver(), HomePageBase.class);
         String query = homePage.getSearchKeywordFromHome();
 
-        SearchResultsPage resultsPage = homePage.search(query);
+        SearchResultsPageBase resultsPage = homePage.search(query);
 
         Assert.assertTrue(resultsPage.isDisplayed(), "Results page not displayed.");
 
@@ -44,10 +44,10 @@ public class ECommerceTests extends AbstractTest {
 
     @Test
     public void verifyProductSearchWithNoResults() {
-        HomePage homePage = new HomePage(getDriver());
+        HomePageBase homePage = initPage(getDriver(), HomePageBase.class);
 
         String query = "wkjnefjnfinerifgnrenfgjnrbvbvbvbvbvbvbbvbvbvbvbbvbvbv";
-        SearchResultsPage resultsPage = homePage.search(query);
+        SearchResultsPageBase resultsPage = homePage.search(query);
 
         Assert.assertTrue(resultsPage.isDisplayed(), "Results page not displayed.");
         Assert.assertTrue(resultsPage.isNoMatchesMessageDisplayed(), "No matches message should be displayed.");
@@ -57,10 +57,10 @@ public class ECommerceTests extends AbstractTest {
 
     @Test
     public void verifyProductDetailsPageOpensFromSearchResults() {
-        HomePage homePage = new HomePage(getDriver());
+        HomePageBase homePage = initPage(getDriver(), HomePageBase.class);
         String query = homePage.getSearchKeywordFromHome();
 
-        SearchResultsPage resultsPage = homePage.search(query);
+        SearchResultsPageBase resultsPage = homePage.search(query);
         Assert.assertTrue(resultsPage.isDisplayed(), "Results page not displayed.");
         Assert.assertTrue(resultsPage.getVisibleProductCardCount() > 0,
                 "Search should return at least 1 product.");
@@ -68,7 +68,7 @@ public class ECommerceTests extends AbstractTest {
         String clickedTitle = resultsPage.getFirstVisibleProductTitle();
         Assert.assertFalse(normalizeText(clickedTitle).isEmpty(), "Clicked product title is empty.");
 
-        ProductPage productPage = resultsPage.openFirstVisibleProduct();
+        ProductPageBase productPage = resultsPage.openFirstVisibleProduct();
 
         Assert.assertTrue(productPage.isAddToCartVisibleAndEnabled(),
                 "Add to cart button is not visible/enabled.");
@@ -85,8 +85,8 @@ public class ECommerceTests extends AbstractTest {
 
     @Test
     public void verifyAddToCartFromProductDetailsPage() {
-        HomePage homePage = new HomePage(getDriver());
-        ProductPage productPage = homePage.openFirstProduct();
+        HomePageBase homePage = initPage(getDriver(), HomePageBase.class);
+        ProductPageBase productPage = homePage.openFirstProduct();
 
         String pdpTitle = productPage.getTitle();
         int before = productPage.getCartCount();
@@ -109,15 +109,15 @@ public class ECommerceTests extends AbstractTest {
 
     @Test
     public void verifyCartQuantityUpdateRecalculatesTotals() {
-        HomePage homePage = new HomePage(getDriver());
+        HomePageBase homePage = initPage(getDriver(), HomePageBase.class);
 
-        ProductPage productPage = homePage.openFirstProduct();
+        ProductPageBase productPage = homePage.openFirstProduct();
         productPage.selectRequiredOptionsIfPresent();
         productPage.addToCart();
 
         Assert.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
 
-        CartPage cartPage = productPage.openCartFromModal();
+        CartPageBase cartPage = productPage.openCartFromModal();
         Assert.assertTrue(cartPage.isDisplayed(), "Cart page not displayed (cart lines not visible).");
 
         BigDecimal subtotal1 = cartPage.getProductsSubtotal();
@@ -137,15 +137,15 @@ public class ECommerceTests extends AbstractTest {
 
     @Test
     public void verifyCartIsEmptyAfterRemovingLastProduct() {
-        HomePage homePage = new HomePage(getDriver());
-        ProductPage productPage = homePage.openFirstProduct();
+        HomePageBase homePage = initPage(getDriver(), HomePageBase.class);
+        ProductPageBase productPage = homePage.openFirstProduct();
 
         productPage.selectRequiredOptionsIfPresent();
         productPage.addToCart();
 
         Assert.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
 
-        CartPage cartPage = productPage.openCartFromModal();
+        CartPageBase cartPage = productPage.openCartFromModal();
         Assert.assertTrue(cartPage.isDisplayed(), "Cart page not displayed.");
 
         Assert.assertTrue(cartPage.getCartLinesCount() > 0, "Cart should have at least 1 product line.");

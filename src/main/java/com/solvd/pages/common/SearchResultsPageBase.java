@@ -1,4 +1,4 @@
-package com.solvd.pages;
+package com.solvd.pages.common;
 
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
 import org.openqa.selenium.By;
@@ -10,9 +10,7 @@ import org.openqa.selenium.support.FindBy;
 import java.util.List;
 import java.util.Locale;
 
-public class SearchResultsPage extends BasePage {
-
-    private static final By PAGE_READY_LOCATOR = By.cssSelector("#js-product-list");
+public abstract class SearchResultsPageBase extends BasePage {
 
     @FindBy(css = "#js-product-list")
     private ExtendedWebElement productList;
@@ -29,12 +27,14 @@ public class SearchResultsPage extends BasePage {
     @FindBy(css = "#content.page-content.page-not-found")
     private List<ExtendedWebElement> pageNotFoundSection;
 
-    public SearchResultsPage(WebDriver driver) {
+    public SearchResultsPageBase(WebDriver driver) {
         super(driver);
     }
 
+    protected abstract By getPageReadyLocator();
+
     public void waitForPageOpened() {
-        ensureFrontOfficeIframeOnce(PAGE_READY_LOCATOR);
+        ensureFrontOfficeIframeOnce(getPageReadyLocator());
 
         waitUntil(d ->
                         (productList != null && productList.isElementPresent(1)) ||
@@ -85,11 +85,11 @@ public class SearchResultsPage extends BasePage {
         return 0;
     }
 
-    public ProductPage openFirstVisibleProduct() {
+    public ProductPageBase openFirstVisibleProduct() {
         waitForPageOpened();
         ExtendedWebElement first = findFirstVisibleProductTitle();
         first.click();
-        return new ProductPage(getDriver());
+        return initPage(getDriver(), ProductPageBase.class);
     }
 
     public String getFirstVisibleProductTitle() {

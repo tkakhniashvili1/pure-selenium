@@ -1,4 +1,4 @@
-package com.solvd.pages;
+package com.solvd.pages.common;
 
 import com.zebrunner.carina.utils.config.Configuration;
 import com.zebrunner.carina.webdriver.gui.AbstractPage;
@@ -58,7 +58,12 @@ public abstract class BasePage extends AbstractPage {
             currentUrl = null;
         }
 
-        if (currentUrl == null || currentUrl.isBlank() || currentUrl.equals("about:blank") || currentUrl.startsWith("data:")) {
+        if (currentUrl == null
+                || currentUrl.isBlank()
+                || currentUrl.equals("about:blank")
+                || currentUrl.startsWith("data:")
+                || currentUrl.startsWith("chrome://")
+                || currentUrl.startsWith("chrome-search://")) {
             driver.get(baseUrl);
         }
     }
