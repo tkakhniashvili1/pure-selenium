@@ -1,4 +1,4 @@
-package com.solvd.pages;
+package com.solvd.pages.common;
 
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
 import org.openqa.selenium.By;
@@ -9,9 +9,7 @@ import org.openqa.selenium.support.FindBy;
 
 import java.util.List;
 
-public class HomePage extends BasePage {
-
-    private static final By PAGE_READY_LOCATOR = By.cssSelector("#search_widget input[name='s']");
+public abstract class HomePageBase extends BasePage {
 
     @FindBy(css = "#search_widget input[name='s']")
     private ExtendedWebElement searchInput;
@@ -22,16 +20,18 @@ public class HomePage extends BasePage {
     @FindBy(css = "#content .product-title a")
     private List<ExtendedWebElement> productTitleLinks;
 
-    public HomePage(WebDriver driver) {
+    public HomePageBase(WebDriver driver) {
         super(driver);
     }
 
+    protected abstract By getPageReadyLocator();
+
     public void waitForPageOpened() {
-        ensureFrontOfficeIframeOnce(PAGE_READY_LOCATOR);
+        ensureFrontOfficeIframeOnce(getPageReadyLocator());
         searchInput.isElementPresent(getDefaultWaitTimeout());
     }
 
-    public SearchResultsPage search(String query) {
+    public SearchResultsPageBase search(String query) {
         waitForPageOpened();
 
         searchInput.click();
@@ -44,7 +44,7 @@ public class HomePage extends BasePage {
             searchInput.getElement().sendKeys(Keys.ENTER);
         }
 
-        return new SearchResultsPage(getDriver());
+        return initPage(getDriver(), SearchResultsPageBase.class);
     }
 
     public String getSearchKeywordFromHome() {
@@ -68,7 +68,7 @@ public class HomePage extends BasePage {
         return title.substring(0, Math.min(6, title.length())).toLowerCase();
     }
 
-    public ProductPage openFirstProduct() {
+    public ProductPageBase openFirstProduct() {
         waitForPageOpened();
 
         ExtendedWebElement first = productTitleLinks.stream()
@@ -81,6 +81,6 @@ public class HomePage extends BasePage {
         }
 
         first.click();
-        return new ProductPage(getDriver());
+        return initPage(getDriver(), ProductPageBase.class);
     }
 }

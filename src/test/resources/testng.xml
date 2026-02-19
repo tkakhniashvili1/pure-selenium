@@ -1,13 +1,10 @@
-<suite name="Selenium Grid Suite" parallel="tests" thread-count="2">
-    <test name="Chrome Tests">
-        <parameter name="browser" value="chrome"/>
-        <classes>
-            <class name="com.solvd.tests.ECommerceTests"/>
-        </classes>
-    </test>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.1.dtd" >
+<suite name="Android Mobile Web" parallel="false" thread-count="1">
+    <listeners>
+        <listener class-name="com.zebrunner.carina.core.listeners.CarinaListener"/>
+    </listeners>
 
-    <test name="Firefox Tests">
-        <parameter name="browser" value="firefox"/>
+    <test name="Android Chrome Tests">
         <classes>
             <class name="com.solvd.tests.ECommerceTests"/>
         </classes>

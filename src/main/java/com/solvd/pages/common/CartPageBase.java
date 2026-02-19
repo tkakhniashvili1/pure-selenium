@@ -1,4 +1,4 @@
-package com.solvd.pages;
+package com.solvd.pages.common;
 
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
 import org.openqa.selenium.By;
@@ -10,9 +10,7 @@ import org.openqa.selenium.support.FindBy;
 import java.math.BigDecimal;
 import java.util.List;
 
-public class CartPage extends BasePage {
-
-    private static final By PAGE_READY_LOCATOR = By.id("main");
+public abstract class CartPageBase extends BasePage {
 
     @FindBy(css = "#main .cart-items .cart-item")
     private List<ExtendedWebElement> cartItems;
@@ -38,14 +36,15 @@ public class CartPage extends BasePage {
     @FindBy(css = ".cart-products-count")
     private List<ExtendedWebElement> cartCount;
 
-    public CartPage(WebDriver driver) {
+    public CartPageBase(WebDriver driver) {
         super(driver);
     }
 
+    protected abstract By getPageReadyLocator();
+
     public void waitForPageOpened() {
-        ensureFrontOfficeIframeOnce(PAGE_READY_LOCATOR);
-        waitUntil(d -> findFirstVisibleElement(cartItems, emptyCartMessage) != null,
-                getDefaultWaitTimeout());
+        ensureFrontOfficeIframeOnce(getPageReadyLocator());
+        waitUntil(d -> findFirstVisibleElement(cartItems, emptyCartMessage) != null, getDefaultWaitTimeout());
     }
 
     public boolean isDisplayed() {

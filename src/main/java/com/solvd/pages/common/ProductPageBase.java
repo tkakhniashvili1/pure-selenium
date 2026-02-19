@@ -1,4 +1,4 @@
-package com.solvd.pages;
+package com.solvd.pages.common;
 
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
 import org.openqa.selenium.*;
@@ -11,9 +11,7 @@ import java.util.Set;
 
 import static com.solvd.utils.ParseUtil.parseCount;
 
-public class ProductPage extends BasePage {
-
-    private static final By PAGE_READY_LOCATOR = By.cssSelector("#main h1");
+public abstract class ProductPageBase extends BasePage {
 
     @FindBy(css = "#main h1")
     private ExtendedWebElement productTitle;
@@ -48,12 +46,14 @@ public class ProductPage extends BasePage {
     @FindBy(css = "#blockcart-modal")
     private ExtendedWebElement blockcartModal;
 
-    public ProductPage(WebDriver driver) {
+    public ProductPageBase(WebDriver driver) {
         super(driver);
     }
 
+    protected abstract By getPageReadyLocator();
+
     public void waitForPageOpened() {
-        ensureFrontOfficeIframeOnce(PAGE_READY_LOCATOR);
+        ensureFrontOfficeIframeOnce(getPageReadyLocator());
         productTitle.isElementPresent(getDefaultWaitTimeout());
     }
 
@@ -143,12 +143,11 @@ public class ProductPage extends BasePage {
         return getCartCount();
     }
 
-    public CartPage openCartFromModal() {
+    public CartPageBase openCartFromModal() {
         proceedToCheckoutButton.click();
-
         getDriver().switchTo().defaultContent();
 
-        CartPage cartPage = new CartPage(getDriver());
+        CartPageBase cartPage = initPage(getDriver(), CartPageBase.class);
         cartPage.waitForPageOpened();
         return cartPage;
     }
