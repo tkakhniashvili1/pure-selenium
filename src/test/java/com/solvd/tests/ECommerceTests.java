@@ -154,6 +154,6 @@ public class ECommerceTests extends AbstractTest {
 
         Assert.assertEquals(cartPage.getCartLinesCount(), 0, "Product line should be removed from the cart.");
         Assert.assertTrue(cartPage.isEmptyCartMessageDisplayed(), "Empty cart message should be displayed.");
-        Assert.assertEquals(cartPage.getHeaderCartCount(), 0, "Cart quantity indicator should be 0.");
+        Assert.assertEquals(cartPage.cartCountElement(), 0, "Cart quantity indicator should be 0.");
     }
 }

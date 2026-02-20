@@ -1,13 +1,17 @@
 package com.solvd.pages;
 
 import com.zebrunner.carina.utils.config.Configuration;
+import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
 import com.zebrunner.carina.webdriver.gui.AbstractPage;
 import org.openqa.selenium.*;
+import org.openqa.selenium.support.FindBy;
+
+import java.util.List;
 
 public abstract class BasePage extends AbstractPage {
 
-    private static final By FRONT_OFFICE_IFRAME_BY =
-            By.cssSelector("iframe#framelive, iframe.framelive, iframe[name='framelive']");
+    @FindBy(css = "iframe#framelive, iframe.framelive, iframe[name='framelive']")
+    private ExtendedWebElement frontOfficeIframe;
 
     private boolean frontOfficeIframeEnsured = false;
 
@@ -17,35 +21,26 @@ public abstract class BasePage extends AbstractPage {
 
     protected void ensureFrontOfficeIframe(By probeBy) {
         WebDriver driver = getDriver();
-
         openBaseUrlIfNeeded(driver);
-
         driver.switchTo().defaultContent();
-
-        if (isAnyElementDisplayed(driver, probeBy)) return;
 
         long timeout = getDefaultWaitTimeout().getSeconds();
 
-        waitUntil(d ->
-                        isAnyElementDisplayed(d, probeBy) ||
-                                !d.findElements(FRONT_OFFICE_IFRAME_BY).isEmpty(),
-                timeout
-        );
-
-        if (isAnyElementDisplayed(driver, probeBy)) return;
-
         waitUntil(d -> {
-            try {
-                WebElement iframe = d.findElement(FRONT_OFFICE_IFRAME_BY);
-                d.switchTo().frame(iframe);
-                return true;
-            } catch (NoSuchElementException | StaleElementReferenceException e) {
-                d.switchTo().defaultContent();
-                return false;
-            }
-        }, timeout);
+            if (isAnyElementDisplayed(d, probeBy)) return true;
 
-        waitUntil(d -> isAnyElementDisplayed(d, probeBy), timeout);
+            if (frontOfficeIframe.isPresent()) {
+                try {
+                    d.switchTo().frame(frontOfficeIframe.getElement());
+                    return isAnyElementDisplayed(d, probeBy);
+                } catch (StaleElementReferenceException e) {
+                    d.switchTo().defaultContent();
+                    return false;
+                }
+            }
+
+            return false;
+        }, timeout);
     }
 
     private void openBaseUrlIfNeeded(WebDriver driver) {

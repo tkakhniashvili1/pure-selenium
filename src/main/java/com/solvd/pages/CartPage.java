@@ -13,6 +13,8 @@ import java.util.List;
 public class CartPage extends BasePage {
 
     private static final By PAGE_READY_LOCATOR = By.id("main");
+    private static final String ATTRIBUTE_VALUE = "value";
+    private static final String ATTRIBUTE_TEXT_CONTENT = "textContent";
 
     @FindBy(css = "#main .cart-items .cart-item")
     private List<ExtendedWebElement> cartItems;
@@ -59,55 +61,43 @@ public class CartPage extends BasePage {
 
     public int getQuantity() {
         waitForPageOpened();
-        waitUntil(d -> findFirstVisibleElement(cartItemQuantities) != null, getDefaultWaitTimeout());
 
-        ExtendedWebElement quantity = findFirstVisibleElement(cartItemQuantities);
-        String v = (quantity == null) ? null : quantity.getAttribute("value");
-        return (v == null || v.isBlank()) ? 0 : Integer.parseInt(v.trim());
+        ExtendedWebElement quantityInput = findFirstVisibleElement(cartItemQuantities);
+        if (quantityInput == null) {
+            return 0;
+        }
+
+        String value = quantityInput.getAttribute(ATTRIBUTE_VALUE);
+        if (value == null || value.isBlank()) {
+            return 0;
+        }
+
+        return Integer.parseInt(value.trim());
     }
 
     public BigDecimal getProductsSubtotal() {
         waitForPageOpened();
-        waitUntil(d -> {
-            ExtendedWebElement e = findFirstVisibleElement(subtotal);
-            String t = (e == null) ? null : e.getAttribute("textContent");
-            return t != null && t.matches(".*\\d.*");
-        }, getDefaultWaitTimeout());
-
-        ExtendedWebElement el = findFirstVisibleElement(subtotal);
-        return parseMoney(el.getAttribute("textContent"));
+        return readMoneyFrom(subtotal);
     }
 
     public BigDecimal getTotal() {
         waitForPageOpened();
-        waitUntil(d -> {
-            ExtendedWebElement e = findFirstVisibleElement(total);
-            String t = (e == null) ? null : e.getAttribute("textContent");
-            return t != null && t.matches(".*\\d.*");
-        }, getDefaultWaitTimeout());
-
-        ExtendedWebElement el = findFirstVisibleElement(total);
-        return parseMoney(el.getAttribute("textContent"));
+        return readMoneyFrom(total);
     }
 
-    public void increaseQuantityTo(int target) {
+    public void increaseQuantityTo(int targetQuantity) {
         waitForPageOpened();
 
-        waitUntil(d -> findFirstVisibleElement(quantityPlusButtons) != null, getDefaultWaitTimeout());
-        waitUntil(d -> findFirstVisibleElement(cartItemQuantities) != null, getDefaultWaitTimeout());
+        while (getQuantity() < targetQuantity) {
+            ExtendedWebElement plusButton = findFirstVisibleElement(quantityPlusButtons);
+            if (plusButton == null || !plusButton.isEnabled()) {
+                throw new NoSuchElementException("Quantity increase button not found or disabled");
+            }
 
-        while (true) {
-            int current = getQuantity();
-            if (current >= target) return;
+            int currentQuantity = getQuantity();
+            plusButton.click();
 
-            ExtendedWebElement plus = findFirstVisibleElement(quantityPlusButtons);
-            if (plus == null || !plus.isEnabled())
-                throw new NoSuchElementException("Quantity + button not found/enabled");
-
-            plus.click();
-
-            int before = current;
-            waitUntil(d -> getQuantity() > before, getDefaultWaitTimeout());
+            waitUntil(d -> getQuantity() > currentQuantity, getDefaultWaitTimeout());
         }
     }
 
@@ -121,20 +111,23 @@ public class CartPage extends BasePage {
     public void removeFirstLine() {
         waitForPageOpened();
 
-        if (findFirstVisibleElement(emptyCartMessage) != null) return;
+        if (isEmptyCartMessageDisplayed()) {
+            return;
+        }
 
-        int before = getCartLinesCount();
+        int initialCartLinesCount = getCartLinesCount();
 
-        waitUntil(d -> findFirstVisibleElement(removeButtons) != null, getDefaultWaitTimeout());
-        ExtendedWebElement remove = findFirstVisibleElement(removeButtons);
-        if (remove == null) throw new NoSuchElementException("Remove button not found");
+        ExtendedWebElement firstRemoveButton = findFirstVisibleElement(removeButtons);
+        if (firstRemoveButton == null) {
+            throw new NoSuchElementException("Remove button not found");
+        }
 
-        remove.click();
+        firstRemoveButton.click();
 
-        waitUntil(d -> {
-            if (findFirstVisibleElement(emptyCartMessage) != null) return true;
-            return getCartLinesCount() < before;
-        }, getDefaultWaitTimeout());
+        waitUntil(d ->
+                        isEmptyCartMessageDisplayed() ||
+                                getCartLinesCount() < initialCartLinesCount,
+                getDefaultWaitTimeout());
     }
 
     public boolean isEmptyCartMessageDisplayed() {
@@ -142,7 +135,7 @@ public class CartPage extends BasePage {
         return findFirstVisibleElement(emptyCartMessage) != null;
     }
 
-    public int getHeaderCartCount() {
+    public int cartCountElement() {
         waitForPageOpened();
 
         ExtendedWebElement el = findFirstVisibleElement(cartCount);
@@ -180,5 +173,20 @@ public class CartPage extends BasePage {
         else s = s.replace(",", "");
 
         return s.isBlank() ? BigDecimal.ZERO : new BigDecimal(s);
+    }
+
+    private BigDecimal readMoneyFrom(List<ExtendedWebElement> elements) {
+        waitUntil(d -> isMoneyValuePresent(elements), getDefaultWaitTimeout());
+
+        ExtendedWebElement el = findFirstVisibleElement(elements);
+        if (el == null) return BigDecimal.ZERO;
+
+        return parseMoney(el.getAttribute(ATTRIBUTE_TEXT_CONTENT));
+    }
+
+    private boolean isMoneyValuePresent(List<ExtendedWebElement> elements) {
+        ExtendedWebElement el = findFirstVisibleElement(elements);
+        String t = (el == null) ? null : el.getAttribute(ATTRIBUTE_TEXT_CONTENT);
+        return t != null && t.matches(".*\\d.*");
     }
 }
