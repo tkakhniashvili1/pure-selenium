@@ -1,24 +1,16 @@
 package com.solvd.pages;
 
-import com.solvd.utils.ConfigReader;
 import org.openqa.selenium.*;
 import org.openqa.selenium.support.FindBy;
-import org.openqa.selenium.support.PageFactory;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
-import org.openqa.selenium.support.ui.WebDriverWait;
 
-import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.solvd.utils.UiActions.click;
+public class ProductPage extends AbstractPage {
 
-public class ProductPage {
-
-    protected final WebDriver driver;
-    private final WebDriverWait wait;
+    private static final By PAGE_READY_LOCATOR = By.cssSelector("#main h1");
 
     @FindBy(css = "#main h1")
     private WebElement productTitle;
@@ -54,74 +46,83 @@ public class ProductPage {
     private WebElement blockcartModal;
 
     public ProductPage(WebDriver driver) {
-        this.driver = driver;
-        this.wait = new WebDriverWait(
-                driver,
-                Duration.ofSeconds(Integer.parseInt(ConfigReader.getProperty("implicit.wait")))
-        );
-        PageFactory.initElements(driver, this);
+        super(driver);
+    }
+
+    public void waitUntilElementLoaded() {
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        wait.until(d -> productTitle.isDisplayed());
     }
 
     public String getTitle() {
-        wait.until(ExpectedConditions.visibilityOf(productTitle));
-        return productTitle.getText().trim();
+        waitUntilElementLoaded();
+        return getText(productTitle, "productTitle");
     }
 
     public boolean isAddToCartVisibleAndEnabled() {
-        wait.until(ExpectedConditions.visibilityOf(addToCartButton));
+        waitUntilElementLoaded();
+        wait.until(d -> addToCartButton.isDisplayed());
         return addToCartButton.isDisplayed() && addToCartButton.isEnabled();
     }
 
     public void selectRequiredOptionsIfPresent() {
-        for (WebElement selectVariant: variantSelects) {
+        waitUntilElementLoaded();
+
+        for (WebElement selectVariant : variantSelects) {
             Select select = new Select(selectVariant);
             select.getOptions().stream()
-                    .filter(opt -> opt.isEnabled() && !opt.getAttribute("value").isBlank())
+                    .filter(opt -> opt.isEnabled()
+                            && opt.getAttribute("value") != null
+                            && !opt.getAttribute("value").isBlank())
                     .findFirst()
                     .ifPresent(opt -> select.selectByValue(opt.getAttribute("value")));
         }
 
         Set<String> pickedNames = new HashSet<>();
-        for (WebElement radio : variantRadios) {
-            String name = radio.getAttribute("name");
-            if (name != null && !name.isBlank() && radio.isEnabled() && pickedNames.add(name)) {
-                try {
-                    radio.click();
-                } catch (ElementClickInterceptedException e) {
-                    ((JavascriptExecutor) driver).executeScript("arguments[0].click();", radio);
-                }
+        for (WebElement label : variantRadios) {
+            WebElement input;
+            try {
+                input = label.findElement(By.cssSelector("input[type='radio']"));
+            } catch (NoSuchElementException ignored) {
+                continue;
+            }
+
+            String name = input.getAttribute("name");
+            if (name != null && !name.isBlank() && input.isEnabled() && pickedNames.add(name)) {
+                click(label, "variantRadioLabel");
             }
         }
 
         colorSwatches.stream()
                 .filter(WebElement::isDisplayed)
                 .findFirst()
-                .ifPresent(swatch -> click(driver, wait, swatch));
+                .ifPresent(swatch -> click(swatch, "colorSwatch"));
     }
 
     public void addToCart() {
-        click(driver, wait, addToCartButton);
+        waitUntilElementLoaded();
+        click(addToCartButton, "addToCartButton");
     }
 
     public int getModalItemsCount() {
-        wait.until(ExpectedConditions.visibilityOf(modalCartItemsLine));
-        return parseCount(modalCartItemsLine.getText());
+        wait.until(d -> modalCartItemsLine.isDisplayed());
+        return parseCount(getText(modalCartItemsLine, "modalCartItemsLine"));
     }
 
     public boolean isAddToCartModalDisplayed() {
-        wait.until(ExpectedConditions.visibilityOf(blockcartModal));
+        wait.until(d -> blockcartModal.isDisplayed());
         return blockcartModal.isDisplayed();
     }
 
     public String getModalProductName() {
-        wait.until(ExpectedConditions.visibilityOf(modalProductName));
+        wait.until(d -> modalProductName.isDisplayed());
         return modalProductName.getText().trim();
     }
 
     public int getCartCount() {
         WebElement el = getFirstAvailableCartCountElement();
         if (el == null) return 0;
-        return parseCount(textContent(el));
+        return parseCount(getTextContent(el));
     }
 
     public int waitForCartCountToIncrease(int initialCount) {
@@ -138,6 +139,16 @@ public class ProductPage {
         return getCartCount();
     }
 
+    public CartPage openCartFromModal() {
+        click(proceedToCheckoutButton, "proceedToCheckoutButton");
+
+        driver.switchTo().defaultContent();
+
+        CartPage cartPage = new CartPage(driver);
+        cartPage.waitUntilElementLoaded();
+        return cartPage;
+    }
+
     private int parseCount(String raw) {
         if (raw == null) return 0;
         String digits = raw.replaceAll("[^0-9]", "");
@@ -149,21 +160,5 @@ public class ProductPage {
         if (desktopCartCount != null && !desktopCartCount.isEmpty()) return desktopCartCount.get(0);
         if (mobileCartCount != null && !mobileCartCount.isEmpty()) return mobileCartCount.get(0);
         return null;
-    }
-
-    private String textContent(WebElement el) {
-        Object v = ((JavascriptExecutor) driver).executeScript("return arguments[0].textContent;", el);
-        return v == null ? "" : v.toString().trim();
-    }
-
-    public CartPage openCartFromModal() {
-        wait.until(ExpectedConditions.elementToBeClickable(proceedToCheckoutButton));
-        proceedToCheckoutButton.click();
-
-        driver.switchTo().defaultContent();
-
-        CartPage cartPage = new CartPage(driver);
-        cartPage.waitForLoaded();
-        return cartPage;
     }
 }
