@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
 
-import static com.solvd.utils.UiActions.normalizeText;
+import static com.solvd.utils.TextUtils.normalizeText;
 
 public class ECommerceTests extends AbstractTest {
 
