@@ -1,10 +1,6 @@
 package com.solvd.pages;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.StaleElementReferenceException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.ui.Select;
 
@@ -53,19 +49,24 @@ public class ProductPage extends AbstractPage {
         super(driver);
     }
 
-    public String getTitle() {
+    public void waitUntilElementLoaded() {
         ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        wait.until(d -> productTitle.isDisplayed());
+    }
+
+    public String getTitle() {
+        waitUntilElementLoaded();
         return getText(productTitle, "productTitle");
     }
 
     public boolean isAddToCartVisibleAndEnabled() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        waitUntilElementLoaded();
         wait.until(d -> addToCartButton.isDisplayed());
         return addToCartButton.isDisplayed() && addToCartButton.isEnabled();
     }
 
     public void selectRequiredOptionsIfPresent() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        waitUntilElementLoaded();
 
         for (WebElement selectVariant : variantSelects) {
             Select select = new Select(selectVariant);
@@ -99,7 +100,7 @@ public class ProductPage extends AbstractPage {
     }
 
     public void addToCart() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        waitUntilElementLoaded();
         click(addToCartButton, "addToCartButton");
     }
 
@@ -144,7 +145,7 @@ public class ProductPage extends AbstractPage {
         driver.switchTo().defaultContent();
 
         CartPage cartPage = new CartPage(driver);
-        cartPage.waitForLoaded();
+        cartPage.waitUntilElementLoaded();
         return cartPage;
     }
 
