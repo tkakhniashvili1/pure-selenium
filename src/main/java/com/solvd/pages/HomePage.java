@@ -1,62 +1,65 @@
 package com.solvd.pages;
 
-import com.solvd.utils.ConfigReader;
-import org.openqa.selenium.*;
+import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
+import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.FindBy;
-import org.openqa.selenium.support.PageFactory;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 
-import java.time.Duration;
 import java.util.List;
 
-import static com.solvd.utils.UiActions.click;
-import static com.solvd.utils.UiActions.clickIfPresent;
+public class HomePage extends BasePage {
 
-public class HomePage {
-
-    protected final WebDriver driver;
-    private final WebDriverWait wait;
-
-    @FindBy(css = "iframe#framelive")
-    private List<WebElement> iframes;
+    private static final By PAGE_READY_LOCATOR = By.cssSelector("#search_widget input[name='s']");
 
     @FindBy(css = "#search_widget input[name='s']")
-    private WebElement searchInput;
+    private ExtendedWebElement searchInput;
 
     @FindBy(css = "#search_widget button[type='submit']")
-    private WebElement searchSubmitButton;
+    private ExtendedWebElement searchSubmitButton;
 
     @FindBy(css = "#content .product-title a")
-    private List<WebElement> productTitleLinks;
+    private List<ExtendedWebElement> productTitleLinks;
 
     public HomePage(WebDriver driver) {
-        this.driver = driver;
-        this.wait = new WebDriverWait(driver,
-                Duration.ofSeconds(Integer.parseInt(ConfigReader.getProperty("implicit.wait"))));
-        PageFactory.initElements(driver, this);
+        super(driver);
+    }
+
+    public void waitForPageOpened() {
+        ensureFrontOfficeIframeOnce(PAGE_READY_LOCATOR);
+        searchInput.isElementPresent(getDefaultWaitTimeout());
     }
 
     public SearchResultsPage search(String query) {
-        ensureFrontOfficeIframe();
+        waitForPageOpened();
 
-        click(driver, wait, searchInput);
-        searchInput.sendKeys(Keys.chord(Keys.COMMAND, "a"), Keys.BACK_SPACE, query);
+        searchInput.click();
+        searchInput.getElement().clear();
+        searchInput.type(query);
 
-        if (!clickIfPresent(driver, wait, searchSubmitButton)) {
-            searchInput.sendKeys(Keys.ENTER);
+        if (searchSubmitButton.isPresent()) {
+            searchSubmitButton.click();
+        } else {
+            searchInput.getElement().sendKeys(Keys.ENTER);
         }
 
-        return new SearchResultsPage(driver);
+        return new SearchResultsPage(getDriver());
     }
 
     public String getSearchKeywordFromHome() {
-        ensureFrontOfficeIframe();
+        waitForPageOpened();
 
-        wait.until(d -> !productTitleLinks.isEmpty()
-                && !productTitleLinks.get(0).getText().trim().isEmpty());
+        ExtendedWebElement first = productTitleLinks.stream()
+                .filter(e -> e.isElementPresent(1))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("No product titles"));
 
-        String title = productTitleLinks.get(0).getText().trim();
+        if (!first.isElementPresent(getDefaultWaitTimeout())) {
+            throw new NoSuchElementException("No product titles");
+        }
+
+        String title = first.getText().trim();
 
         String[] tokens = title.split("[^A-Za-z0-9]+");
         for (String t : tokens) {
@@ -65,30 +68,19 @@ public class HomePage {
         return title.substring(0, Math.min(6, title.length())).toLowerCase();
     }
 
-    private void ensureFrontOfficeIframe() {
-        try {
-            wait.until(ExpectedConditions.visibilityOf(searchInput));
-            return;
-        } catch (TimeoutException | NoSuchElementException | StaleElementReferenceException ignored) {}
-
-        driver.switchTo().defaultContent();
-        wait.until(d -> !iframes.isEmpty());
-
-        WebElement target = iframes.get(0);
-        wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(target));
-        wait.until(ExpectedConditions.visibilityOf(searchInput));
-    }
-
     public ProductPage openFirstProduct() {
-        ensureFrontOfficeIframe();
+        waitForPageOpened();
 
-        wait.until(d -> !productTitleLinks.isEmpty());
-        WebElement first = productTitleLinks.stream()
-                .filter(WebElement::isDisplayed)
+        ExtendedWebElement first = productTitleLinks.stream()
+                .filter(e -> e.isElementPresent(1))
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException("No displayed home product"));
 
-        click(driver, wait, first);
-        return new ProductPage(driver);
+        if (!first.isElementPresent(getDefaultWaitTimeout())) {
+            throw new NoSuchElementException("No displayed home product");
+        }
+
+        first.click();
+        return new ProductPage(getDriver());
     }
 }

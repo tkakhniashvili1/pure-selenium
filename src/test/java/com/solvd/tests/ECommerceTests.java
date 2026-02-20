@@ -1,58 +1,34 @@
 package com.solvd.tests;
 
-import com.solvd.pages.*;
-import com.solvd.utils.ConfigReader;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.edge.EdgeDriver;
-import org.openqa.selenium.firefox.FirefoxDriver;
+import com.solvd.pages.CartPage;
+import com.solvd.pages.HomePage;
+import com.solvd.pages.ProductPage;
+import com.solvd.pages.SearchResultsPage;
+import com.zebrunner.carina.core.AbstractTest;
+import com.zebrunner.carina.utils.R;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
-import java.time.Duration;
 
 import static com.solvd.utils.UiActions.normalizeText;
 
-public class ECommerceTests {
+public class ECommerceTests extends AbstractTest {
 
-    private WebDriver driver;
-
-    @BeforeClass
-    public void setup() {
-        String browser = ConfigReader.getProperty("browser");
-        switch (browser.toLowerCase()) {
-            case "chrome":
-                driver = new ChromeDriver();
-                break;
-            case "firefox":
-                driver = new FirefoxDriver();
-                break;
-            case "edge":
-                driver = new EdgeDriver();
-                break;
-            default:
-                throw new RuntimeException("Unsupported browser: " + browser);
+    @Parameters({"capabilities.browserName"})
+    @BeforeMethod(alwaysRun = true)
+    public void setBrowserName(@Optional("") String browserName) {
+        if (browserName != null && !browserName.isBlank()) {
+            R.CONFIG.put("capabilities.browserName", browserName, true);
         }
-
-        driver.manage().window().maximize();
-        driver.manage().timeouts().pageLoadTimeout(
-                Duration.ofSeconds(Integer.parseInt(ConfigReader.getProperty("page.load.timeout")))
-        );
-    }
-
-    @BeforeMethod
-    public void openBaseUrl() {
-        driver.manage().deleteAllCookies();
-        driver.get(ConfigReader.getProperty("base.url"));
     }
 
     @Test
     public void verifySuccessfulProductSearch() {
-        HomePage homePage = new HomePage(driver);
+        HomePage homePage = new HomePage(getDriver());
         String query = homePage.getSearchKeywordFromHome();
 
         SearchResultsPage resultsPage = homePage.search(query);
@@ -62,13 +38,13 @@ public class ECommerceTests {
         int count = resultsPage.getVisibleProductCardCount();
 
         Assert.assertTrue(count > 0, "Number of displayed product cards should be > 0");
-        resultsPage.getDisplayedProductTitles().forEach(System.out::println);
+        resultsPage.getVisibleProductTitles().forEach(System.out::println);
         Assert.assertTrue(resultsPage.hasAnyProductTitleContaining(query), "At least one product title should contain '" + query);
     }
 
     @Test
     public void verifyProductSearchWithNoResults() {
-        HomePage homePage = new HomePage(driver);
+        HomePage homePage = new HomePage(getDriver());
 
         String query = "wkjnefjnfinerifgnrenfgjnrbvbvbvbvbvbvbbvbvbvbvbbvbvbv";
         SearchResultsPage resultsPage = homePage.search(query);
@@ -81,7 +57,7 @@ public class ECommerceTests {
 
     @Test
     public void verifyProductDetailsPageOpensFromSearchResults() {
-        HomePage homePage = new HomePage(driver);
+        HomePage homePage = new HomePage(getDriver());
         String query = homePage.getSearchKeywordFromHome();
 
         SearchResultsPage resultsPage = homePage.search(query);
@@ -89,10 +65,10 @@ public class ECommerceTests {
         Assert.assertTrue(resultsPage.getVisibleProductCardCount() > 0,
                 "Search should return at least 1 product.");
 
-        String clickedTitle = resultsPage.getFirstDisplayedProductTitle();
+        String clickedTitle = resultsPage.getFirstVisibleProductTitle();
         Assert.assertFalse(normalizeText(clickedTitle).isEmpty(), "Clicked product title is empty.");
 
-        ProductPage productPage = resultsPage.openFirstDisplayedProduct();
+        ProductPage productPage = resultsPage.openFirstVisibleProduct();
 
         Assert.assertTrue(productPage.isAddToCartVisibleAndEnabled(),
                 "Add to cart button is not visible/enabled.");
@@ -109,7 +85,7 @@ public class ECommerceTests {
 
     @Test
     public void verifyAddToCartFromProductDetailsPage() {
-        HomePage homePage = new HomePage(driver);
+        HomePage homePage = new HomePage(getDriver());
         ProductPage productPage = homePage.openFirstProduct();
 
         String pdpTitle = productPage.getTitle();
@@ -133,7 +109,7 @@ public class ECommerceTests {
 
     @Test
     public void verifyCartQuantityUpdateRecalculatesTotals() {
-        HomePage homePage = new HomePage(driver);
+        HomePage homePage = new HomePage(getDriver());
 
         ProductPage productPage = homePage.openFirstProduct();
         productPage.selectRequiredOptionsIfPresent();
@@ -147,21 +123,21 @@ public class ECommerceTests {
         BigDecimal subtotal1 = cartPage.getProductsSubtotal();
         BigDecimal total1 = cartPage.getTotal();
 
-        int targetQty = 2;
-        cartPage.increaseQuantityTo(targetQty);
+        int targetQuantity = 2;
+        cartPage.increaseQuantityTo(targetQuantity);
 
-        Assert.assertEquals(cartPage.getQuantity(), targetQty, "Quantity value was not updated.");
+        Assert.assertEquals(cartPage.getQuantity(), targetQuantity, "Quantity value was not updated.");
 
         BigDecimal subtotal2 = cartPage.getProductsSubtotal();
         BigDecimal total2 = cartPage.getTotal();
 
-        Assert.assertTrue(subtotal2.compareTo(subtotal1) > 0, "Products subtotal should increase after qty increase.");
+        Assert.assertTrue(subtotal2.compareTo(subtotal1) > 0, "Products subtotal should change after quantity increase.");
         Assert.assertTrue(total2.compareTo(total1) > 0, "Total should increase after quantity increase.");
     }
 
     @Test
-    public void verifyRemovingProductEmptiesTheCart() {
-        HomePage homePage = new HomePage(driver);
+    public void verifyCartIsEmptyAfterRemovingLastProduct() {
+        HomePage homePage = new HomePage(getDriver());
         ProductPage productPage = homePage.openFirstProduct();
 
         productPage.selectRequiredOptionsIfPresent();
@@ -178,13 +154,6 @@ public class ECommerceTests {
 
         Assert.assertEquals(cartPage.getCartLinesCount(), 0, "Product line should be removed from the cart.");
         Assert.assertTrue(cartPage.isEmptyCartMessageDisplayed(), "Empty cart message should be displayed.");
-        Assert.assertEquals(cartPage.getHeaderCartCount(), 0, "Cart quantity indicator should be 0.");
-    }
-
-    @AfterClass
-    public void teardown() {
-        if (driver != null) {
-            driver.quit();
-        }
+        Assert.assertEquals(cartPage.cartCountElement(), 0, "Cart quantity indicator should be 0.");
     }
 }
