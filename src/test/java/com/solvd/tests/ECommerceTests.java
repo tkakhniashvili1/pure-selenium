@@ -102,7 +102,7 @@ public class ECommerceTests extends AbstractTest {
         Assert.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
 
         CartPage cartPage = productPage.openCartFromModal();
-        Assert.assertTrue(cartPage.isDisplayed(), "Cart page not displayed (cart lines not visible).");
+        Assert.assertTrue(cartPage.isPageOpened(), "Cart page not displayed (cart lines not visible).");
 
         BigDecimal subtotal1 = cartPage.getProductsSubtotal();
         BigDecimal total1 = cartPage.getTotal();
@@ -130,7 +130,7 @@ public class ECommerceTests extends AbstractTest {
         Assert.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
 
         CartPage cartPage = productPage.openCartFromModal();
-        Assert.assertTrue(cartPage.isDisplayed(), "Cart page not displayed.");
+        Assert.assertTrue(cartPage.isPageOpened(), "Cart page not displayed.");
 
         Assert.assertTrue(cartPage.getCartLinesCount() > 0, "Cart should have at least 1 product line.");
 
