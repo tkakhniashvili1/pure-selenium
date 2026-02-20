@@ -1,6 +1,11 @@
 package com.solvd.pages;
 
-import org.openqa.selenium.*;
+import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.StaleElementReferenceException;
+import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 
 import java.util.List;
@@ -29,13 +34,8 @@ public class SearchResultsPage extends AbstractPage {
         super(driver);
     }
 
-    public void waitUntilElementLoaded() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
-        wait.until(d -> productList.isDisplayed() || !noMatchesHeader.isEmpty() || !pageNotFoundSection.isEmpty());
-    }
-
     public boolean isDisplayed() {
-        waitUntilElementLoaded();
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
         try {
             wait.until(d -> productList.isDisplayed());
             return true;
@@ -45,7 +45,7 @@ public class SearchResultsPage extends AbstractPage {
     }
 
     public boolean hasAnyProductTitleContaining(String keyword) {
-        waitUntilElementLoaded();
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
         String k = keyword.toLowerCase(Locale.ROOT);
 
         return productTitles.stream()
@@ -55,14 +55,14 @@ public class SearchResultsPage extends AbstractPage {
     }
 
     public boolean isNoMatchesMessageDisplayed() {
-        waitUntilElementLoaded();
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
         wait.until(d -> !noMatchesHeader.isEmpty() || !pageNotFoundSection.isEmpty() || !productCards.isEmpty());
         return noMatchesHeader.stream().anyMatch(WebElement::isDisplayed)
                 || pageNotFoundSection.stream().anyMatch(WebElement::isDisplayed);
     }
 
     public int getVisibleProductCardCount() {
-        waitUntilElementLoaded();
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
         wait.until(d -> productCards.stream().anyMatch(WebElement::isDisplayed)
                 || noMatchesHeader.stream().anyMatch(WebElement::isDisplayed)
                 || pageNotFoundSection.stream().anyMatch(WebElement::isDisplayed));
@@ -80,20 +80,20 @@ public class SearchResultsPage extends AbstractPage {
         return 0;
     }
 
-    public ProductPage openFirstDisplayedProduct() {
-        waitUntilElementLoaded();
+    public ProductPage openFirstVisibleProduct() {
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
         WebElement first = firstVisibleProductTitle();
         click(first, "firstVisibleProductTitle");
         return new ProductPage(driver);
     }
 
-    public String getFirstDisplayedProductTitle() {
-        waitUntilElementLoaded();
+    public String getFirstVisibleProductTitle() {
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
         return firstVisibleProductTitle().getText().trim();
     }
 
     public List<String> getDisplayedProductTitles() {
-        waitUntilElementLoaded();
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
         wait.until(d -> productTitles != null && !productTitles.isEmpty());
         return productTitles.stream()
                 .filter(WebElement::isDisplayed)
