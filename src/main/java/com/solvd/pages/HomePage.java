@@ -1,10 +1,6 @@
 package com.solvd.pages;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.Keys;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.FindBy;
 
 import java.util.List;
@@ -26,13 +22,13 @@ public class HomePage extends AbstractPage {
         super(driver);
     }
 
-    @Override
-    protected By getPageReadyLocator() {
-        return PAGE_READY_LOCATOR;
+    public void waitUntilElementLoaded() {
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        wait.until(d -> searchInput.isDisplayed());
     }
 
     public SearchResultsPage search(String query) {
-        ensureLoaded();
+        waitUntilElementLoaded();
 
         click(searchInput, "searchInput");
         sendKeys(searchInput, "searchInput",
@@ -46,7 +42,7 @@ public class HomePage extends AbstractPage {
     }
 
     public String getSearchKeywordFromHome() {
-        ensureLoaded();
+        waitUntilElementLoaded();
 
         wait.until(d -> !productTitleLinks.isEmpty()
                 && !productTitleLinks.get(0).getText().trim().isEmpty());
@@ -61,7 +57,7 @@ public class HomePage extends AbstractPage {
     }
 
     public ProductPage openFirstProduct() {
-        ensureLoaded();
+        waitUntilElementLoaded();
 
         wait.until(d -> !productTitleLinks.isEmpty());
         WebElement first = productTitleLinks.stream()

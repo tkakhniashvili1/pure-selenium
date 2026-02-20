@@ -1,13 +1,7 @@
 package com.solvd.pages;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.StaleElementReferenceException;
-import org.openqa.selenium.TimeoutException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.FindBy;
-import org.openqa.selenium.support.ui.ExpectedCondition;
 
 import java.util.List;
 import java.util.Locale;
@@ -35,28 +29,13 @@ public class SearchResultsPage extends AbstractPage {
         super(driver);
     }
 
-    @Override
-    protected By getPageReadyLocator() {
-        return PAGE_READY_LOCATOR;
-    }
-
-    @Override
-    protected ExpectedCondition<?> getPageLoadedCondition() {
-        return d -> {
-            try {
-                return (productList != null && productList.isDisplayed())
-                        || (productCards != null && !productCards.isEmpty())
-                        || (productTitles != null && !productTitles.isEmpty())
-                        || (noMatchesHeader != null && !noMatchesHeader.isEmpty())
-                        || (pageNotFoundSection != null && !pageNotFoundSection.isEmpty());
-            } catch (Exception e) {
-                return false;
-            }
-        };
+    public void waitUntilElementLoaded() {
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        wait.until(d -> productList.isDisplayed() || !noMatchesHeader.isEmpty() || !pageNotFoundSection.isEmpty());
     }
 
     public boolean isDisplayed() {
-        ensureLoaded();
+        waitUntilElementLoaded();
         try {
             wait.until(d -> productList.isDisplayed());
             return true;
@@ -66,7 +45,7 @@ public class SearchResultsPage extends AbstractPage {
     }
 
     public boolean hasAnyProductTitleContaining(String keyword) {
-        ensureLoaded();
+        waitUntilElementLoaded();
         String k = keyword.toLowerCase(Locale.ROOT);
 
         return productTitles.stream()
@@ -76,14 +55,14 @@ public class SearchResultsPage extends AbstractPage {
     }
 
     public boolean isNoMatchesMessageDisplayed() {
-        ensureLoaded();
+        waitUntilElementLoaded();
         wait.until(d -> !noMatchesHeader.isEmpty() || !pageNotFoundSection.isEmpty() || !productCards.isEmpty());
         return noMatchesHeader.stream().anyMatch(WebElement::isDisplayed)
                 || pageNotFoundSection.stream().anyMatch(WebElement::isDisplayed);
     }
 
     public int getVisibleProductCardCount() {
-        ensureLoaded();
+        waitUntilElementLoaded();
         wait.until(d -> productCards.stream().anyMatch(WebElement::isDisplayed)
                 || noMatchesHeader.stream().anyMatch(WebElement::isDisplayed)
                 || pageNotFoundSection.stream().anyMatch(WebElement::isDisplayed));
@@ -102,19 +81,19 @@ public class SearchResultsPage extends AbstractPage {
     }
 
     public ProductPage openFirstDisplayedProduct() {
-        ensureLoaded();
-        WebElement first = findFirstVisibleProductTitle();
-        click(first, "findFirstVisibleProductTitle");
+        waitUntilElementLoaded();
+        WebElement first = firstVisibleProductTitle();
+        click(first, "firstVisibleProductTitle");
         return new ProductPage(driver);
     }
 
     public String getFirstDisplayedProductTitle() {
-        ensureLoaded();
-        return findFirstVisibleProductTitle().getText().trim();
+        waitUntilElementLoaded();
+        return firstVisibleProductTitle().getText().trim();
     }
 
-    public List<String> getVisibleProductTitles() {
-        ensureLoaded();
+    public List<String> getDisplayedProductTitles() {
+        waitUntilElementLoaded();
         wait.until(d -> productTitles != null && !productTitles.isEmpty());
         return productTitles.stream()
                 .filter(WebElement::isDisplayed)
@@ -124,18 +103,11 @@ public class SearchResultsPage extends AbstractPage {
                 .toList();
     }
 
-    private WebElement findFirstVisibleProductTitle() {
-        return wait.until(driver ->
-                productTitles.stream()
-                        .filter(e -> {
-                            try {
-                                return e.isDisplayed();
-                            } catch (StaleElementReferenceException ex) {
-                                return false;
-                            }
-                        })
-                        .findFirst()
-                        .orElseThrow(() -> new NoSuchElementException("No visible product titles found"))
-        );
+    private WebElement firstVisibleProductTitle() {
+        wait.until(d -> productTitles.stream().anyMatch(WebElement::isDisplayed));
+        return productTitles.stream()
+                .filter(WebElement::isDisplayed)
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("No visible product titles found"));
     }
 }

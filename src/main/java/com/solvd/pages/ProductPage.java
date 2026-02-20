@@ -1,11 +1,6 @@
 package com.solvd.pages;
 
-import com.solvd.utils.ParseUtil;
-import org.openqa.selenium.By;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.StaleElementReferenceException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.ui.Select;
 
@@ -54,24 +49,24 @@ public class ProductPage extends AbstractPage {
         super(driver);
     }
 
-    @Override
-    protected By getPageReadyLocator() {
-        return PAGE_READY_LOCATOR;
+    public void waitUntilElementLoaded() {
+        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+        wait.until(d -> productTitle.isDisplayed());
     }
 
     public String getTitle() {
-        ensureLoaded();
+        waitUntilElementLoaded();
         return getText(productTitle, "productTitle");
     }
 
     public boolean isAddToCartVisibleAndEnabled() {
-        ensureLoaded();
+        waitUntilElementLoaded();
         wait.until(d -> addToCartButton.isDisplayed());
         return addToCartButton.isDisplayed() && addToCartButton.isEnabled();
     }
 
     public void selectRequiredOptionsIfPresent() {
-        ensureLoaded();
+        waitUntilElementLoaded();
 
         for (WebElement selectVariant : variantSelects) {
             Select select = new Select(selectVariant);
@@ -105,13 +100,13 @@ public class ProductPage extends AbstractPage {
     }
 
     public void addToCart() {
-        ensureLoaded();
+        waitUntilElementLoaded();
         click(addToCartButton, "addToCartButton");
     }
 
     public int getModalItemsCount() {
         wait.until(d -> modalCartItemsLine.isDisplayed());
-        return ParseUtil.parseCount(getText(modalCartItemsLine, "modalCartItemsLine"));
+        return parseCount(getText(modalCartItemsLine, "modalCartItemsLine"));
     }
 
     public boolean isAddToCartModalDisplayed() {
@@ -127,7 +122,7 @@ public class ProductPage extends AbstractPage {
     public int getCartCount() {
         WebElement el = getFirstAvailableCartCountElement();
         if (el == null) return 0;
-        return ParseUtil.parseCount(getTextContent(el));
+        return parseCount(getTextContent(el));
     }
 
     public int waitForCartCountToIncrease(int initialCount) {
@@ -150,8 +145,15 @@ public class ProductPage extends AbstractPage {
         driver.switchTo().defaultContent();
 
         CartPage cartPage = new CartPage(driver);
-        cartPage.waitForPageOpened();
+        cartPage.waitUntilElementLoaded();
         return cartPage;
+    }
+
+    private int parseCount(String raw) {
+        if (raw == null) return 0;
+        String digits = raw.replaceAll("[^0-9]", "");
+        if (digits.isEmpty()) return 0;
+        return Integer.parseInt(digits);
     }
 
     private WebElement getFirstAvailableCartCountElement() {
