@@ -5,7 +5,6 @@ import org.openqa.selenium.support.FindBy;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import static com.solvd.utils.ParsingUtils.parseIntegerFromText;
 import static com.solvd.utils.ParsingUtils.parseMoney;
@@ -142,7 +141,7 @@ public class CartPage extends AbstractPage {
             for (WebElement el : g) {
                 try {
                     if (el != null && el.isDisplayed()) return el;
-                } catch (StaleElementReferenceException | NoSuchElementException ignored) {
+                } catch (StaleElementReferenceException | org.openqa.selenium.NoSuchElementException ignored) {
                 }
             }
         }
