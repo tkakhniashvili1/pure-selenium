@@ -1,6 +1,10 @@
 package com.solvd.pages;
 
-import org.openqa.selenium.*;
+import org.openqa.selenium.By;
+import org.openqa.selenium.StaleElementReferenceException;
+import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 
 import java.math.BigDecimal;
@@ -13,6 +17,7 @@ import static com.solvd.utils.ParsingUtils.parseMoney;
 public class CartPage extends AbstractPage {
 
     private static final By PAGE_READY_LOCATOR = By.id("main");
+    private boolean loaded = false;
 
     @FindBy(css = ".cart-item")
     private List<WebElement> cartItems;
@@ -40,16 +45,21 @@ public class CartPage extends AbstractPage {
 
     public CartPage(WebDriver driver) {
         super(driver);
+        waitForPageOpened();
     }
 
-    public void waitUntilElementLoaded() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+    public void waitForPageOpened() {
+        if (loaded) return;
+
+        switchToFrontOfficeFrameIfNeeded(PAGE_READY_LOCATOR);
         wait.until(d -> findFirstVisibleElement(cartItems, emptyCartMessage) != null);
+
+        loaded = true;
     }
 
     public boolean isPageOpened() {
         try {
-            waitUntilElementLoaded();
+            waitForPageOpened();
             return true;
         } catch (TimeoutException e) {
             return false;
@@ -73,7 +83,6 @@ public class CartPage extends AbstractPage {
     }
 
     public BigDecimal getTotal() {
-        waitUntilElementLoaded();
         wait.until(d -> findFirstVisibleElement(total) != null);
 
         WebElement el = findFirstVisibleElement(total);
@@ -82,7 +91,6 @@ public class CartPage extends AbstractPage {
     }
 
     public void increaseQuantityTo(int target) {
-        waitUntilElementLoaded();
         wait.until(d -> {
             WebElement button = findFirstVisibleElement(quantityPlusButtons);
             return button != null && button.isEnabled();
@@ -105,13 +113,11 @@ public class CartPage extends AbstractPage {
     }
 
     public int getCartLinesCount() {
-        waitUntilElementLoaded();
         if (findFirstVisibleElement(emptyCartMessage) != null) return 0;
         return (int) cartItems.stream().filter(el -> el != null && el.isDisplayed()).count();
     }
 
     public void removeFirstLine() {
-        waitUntilElementLoaded();
         wait.until(d -> findFirstVisibleElement(cartItems, emptyCartMessage) != null);
 
         wait.until(d -> {
@@ -126,12 +132,10 @@ public class CartPage extends AbstractPage {
     }
 
     public boolean isEmptyCartMessageDisplayed() {
-        waitUntilElementLoaded();
         return findFirstVisibleElement(emptyCartMessage) != null;
     }
 
     public int getHeaderCartCount() {
-        waitUntilElementLoaded();
         WebElement el = findFirstVisibleElement(cartCount);
         return (el == null) ? 0 : parseIntegerFromText(getTextContent(el));
     }

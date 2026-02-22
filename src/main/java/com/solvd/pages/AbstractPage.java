@@ -3,7 +3,6 @@ package com.solvd.pages;
 import com.solvd.utils.ConfigReader;
 import org.openqa.selenium.*;
 import org.openqa.selenium.support.PageFactory;
-import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
@@ -19,8 +18,6 @@ public abstract class AbstractPage {
 
     private static final By FRONT_OFFICE_IFRAME_BY = By.cssSelector("iframe#framelive");
 
-    private boolean loaded = false;
-
     protected AbstractPage(WebDriver driver) {
         this.driver = driver;
         this.wait = new WebDriverWait(
@@ -30,26 +27,7 @@ public abstract class AbstractPage {
         PageFactory.initElements(driver, this);
     }
 
-    protected abstract By getPageReadyLocator();
-
-    protected ExpectedCondition<?> getPageLoadedCondition() {
-        return ExpectedConditions.visibilityOfElementLocated(getPageReadyLocator());
-    }
-
-    public void waitForLoaded() {
-        if (loaded) return;
-
-        ensureFrontOfficeIframe(getPageReadyLocator());
-        wait.until(getPageLoadedCondition());
-
-        loaded = true;
-    }
-
-    protected final void ensureLoaded() {
-        if (!loaded) waitForLoaded();
-    }
-
-    protected void ensureFrontOfficeIframe(By probeBy) {
+    protected void switchToFrontOfficeFrameIfNeeded(By probeBy) {
         try {
             if (isAnyElementDisplayed(probeBy)) return;
         } catch (WebDriverException e) {
@@ -60,6 +38,8 @@ public abstract class AbstractPage {
 
         WebElement frame = wait.until(ExpectedConditions.presenceOfElementLocated(FRONT_OFFICE_IFRAME_BY));
         wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(frame));
+
+        wait.until(ExpectedConditions.visibilityOfElementLocated(probeBy));
     }
 
     private boolean isAnyElementDisplayed(By by) {

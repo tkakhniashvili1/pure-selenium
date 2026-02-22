@@ -14,6 +14,7 @@ import java.util.Locale;
 public class SearchResultsPage extends AbstractPage {
 
     private static final By PAGE_READY_LOCATOR = By.cssSelector("#js-product-list");
+    private boolean loaded = false;
 
     @FindBy(css = "#js-product-list")
     private WebElement productList;
@@ -32,10 +33,16 @@ public class SearchResultsPage extends AbstractPage {
 
     public SearchResultsPage(WebDriver driver) {
         super(driver);
+        waitForLoaded();
+    }
+
+    public void waitForLoaded() {
+        if (loaded) return;
+        switchToFrontOfficeFrameIfNeeded(PAGE_READY_LOCATOR);
+        loaded = true;
     }
 
     public boolean isDisplayed() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
         try {
             wait.until(d -> productList.isDisplayed());
             return true;
@@ -45,7 +52,6 @@ public class SearchResultsPage extends AbstractPage {
     }
 
     public boolean hasAnyProductTitleContaining(String keyword) {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
         String k = keyword.toLowerCase(Locale.ROOT);
 
         return productTitles.stream()
@@ -55,14 +61,12 @@ public class SearchResultsPage extends AbstractPage {
     }
 
     public boolean isNoMatchesMessageDisplayed() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
         wait.until(d -> !noMatchesHeader.isEmpty() || !pageNotFoundSection.isEmpty() || !productCards.isEmpty());
         return noMatchesHeader.stream().anyMatch(WebElement::isDisplayed)
                 || pageNotFoundSection.stream().anyMatch(WebElement::isDisplayed);
     }
 
     public int getVisibleProductCardCount() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
         wait.until(d -> productCards.stream().anyMatch(WebElement::isDisplayed)
                 || noMatchesHeader.stream().anyMatch(WebElement::isDisplayed)
                 || pageNotFoundSection.stream().anyMatch(WebElement::isDisplayed));
@@ -81,19 +85,16 @@ public class SearchResultsPage extends AbstractPage {
     }
 
     public ProductPage openFirstVisibleProduct() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
-        WebElement first = firstVisibleProductTitle();
+        WebElement first = findFirstVisibleProductTitle();
         click(first, "firstVisibleProductTitle");
         return new ProductPage(driver);
     }
 
     public String getFirstVisibleProductTitle() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
-        return firstVisibleProductTitle().getText().trim();
+        return findFirstVisibleProductTitle().getText().trim();
     }
 
-    public List<String> getDisplayedProductTitles() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
+    public List<String> getVisibleProductTitles() {
         wait.until(d -> productTitles != null && !productTitles.isEmpty());
         return productTitles.stream()
                 .filter(WebElement::isDisplayed)
@@ -103,11 +104,18 @@ public class SearchResultsPage extends AbstractPage {
                 .toList();
     }
 
-    private WebElement firstVisibleProductTitle() {
-        wait.until(d -> productTitles.stream().anyMatch(WebElement::isDisplayed));
-        return productTitles.stream()
-                .filter(WebElement::isDisplayed)
-                .findFirst()
-                .orElseThrow(() -> new NoSuchElementException("No visible product titles found"));
+    private WebElement findFirstVisibleProductTitle() {
+        return wait.until(driver ->
+                productTitles.stream()
+                        .filter(e -> {
+                            try {
+                                return e.isDisplayed();
+                            } catch (StaleElementReferenceException ex) {
+                                return false;
+                            }
+                        })
+                        .findFirst()
+                        .orElseThrow(() -> new NoSuchElementException("No visible product titles found"))
+        );
     }
 }

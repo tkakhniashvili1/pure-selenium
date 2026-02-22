@@ -1,6 +1,10 @@
 package com.solvd.pages;
 
-import org.openqa.selenium.*;
+import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.StaleElementReferenceException;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.ui.Select;
 
@@ -11,6 +15,7 @@ import java.util.Set;
 public class ProductPage extends AbstractPage {
 
     private static final By PAGE_READY_LOCATOR = By.cssSelector("#main h1");
+    private boolean loaded = false;
 
     @FindBy(css = "#main h1")
     private WebElement productTitle;
@@ -47,26 +52,25 @@ public class ProductPage extends AbstractPage {
 
     public ProductPage(WebDriver driver) {
         super(driver);
+        waitForLoaded();
     }
 
-    public void waitUntilElementLoaded() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
-        wait.until(d -> productTitle.isDisplayed());
+    public void waitForLoaded() {
+        if (loaded) return;
+        switchToFrontOfficeFrameIfNeeded(PAGE_READY_LOCATOR);
+        loaded = true;
     }
 
     public String getTitle() {
-        waitUntilElementLoaded();
         return getText(productTitle, "productTitle");
     }
 
     public boolean isAddToCartVisibleAndEnabled() {
-        waitUntilElementLoaded();
         wait.until(d -> addToCartButton.isDisplayed());
         return addToCartButton.isDisplayed() && addToCartButton.isEnabled();
     }
 
     public void selectRequiredOptionsIfPresent() {
-        waitUntilElementLoaded();
 
         for (WebElement selectVariant : variantSelects) {
             Select select = new Select(selectVariant);
@@ -100,7 +104,6 @@ public class ProductPage extends AbstractPage {
     }
 
     public void addToCart() {
-        waitUntilElementLoaded();
         click(addToCartButton, "addToCartButton");
     }
 
@@ -145,7 +148,7 @@ public class ProductPage extends AbstractPage {
         driver.switchTo().defaultContent();
 
         CartPage cartPage = new CartPage(driver);
-        cartPage.waitUntilElementLoaded();
+        cartPage.waitForPageOpened();
         return cartPage;
     }
 

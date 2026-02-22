@@ -2,9 +2,9 @@ package com.solvd.utils;
 
 import java.util.Locale;
 
-public final class UiActions {
+public final class TextUtils {
 
-    private UiActions() {
+    private TextUtils() {
     }
 
     public static String normalizeText(String s) {

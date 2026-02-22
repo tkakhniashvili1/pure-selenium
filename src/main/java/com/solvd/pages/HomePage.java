@@ -1,6 +1,10 @@
 package com.solvd.pages;
 
-import org.openqa.selenium.*;
+import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 
 import java.util.List;
@@ -8,6 +12,7 @@ import java.util.List;
 public class HomePage extends AbstractPage {
 
     private static final By PAGE_READY_LOCATOR = By.cssSelector("#search_widget input[name='s']");
+    private boolean loaded = false;
 
     @FindBy(css = "#search_widget input[name='s']")
     private WebElement searchInput;
@@ -20,16 +25,16 @@ public class HomePage extends AbstractPage {
 
     public HomePage(WebDriver driver) {
         super(driver);
+        waitForLoaded();
     }
 
-    public void waitUntilElementLoaded() {
-        ensureFrontOfficeIframe(PAGE_READY_LOCATOR);
-        wait.until(d -> searchInput.isDisplayed());
+    public void waitForLoaded() {
+        if (loaded) return;
+        switchToFrontOfficeFrameIfNeeded(PAGE_READY_LOCATOR);
+        loaded = true;
     }
 
     public SearchResultsPage search(String query) {
-        waitUntilElementLoaded();
-
         click(searchInput, "searchInput");
         sendKeys(searchInput, "searchInput",
                 Keys.chord(Keys.COMMAND, "a"), Keys.BACK_SPACE, query);
@@ -42,8 +47,6 @@ public class HomePage extends AbstractPage {
     }
 
     public String getSearchKeywordFromHome() {
-        waitUntilElementLoaded();
-
         wait.until(d -> !productTitleLinks.isEmpty()
                 && !productTitleLinks.get(0).getText().trim().isEmpty());
 
@@ -57,8 +60,6 @@ public class HomePage extends AbstractPage {
     }
 
     public ProductPage openFirstProduct() {
-        waitUntilElementLoaded();
-
         wait.until(d -> !productTitleLinks.isEmpty());
         WebElement first = productTitleLinks.stream()
                 .filter(WebElement::isDisplayed)
