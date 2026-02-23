@@ -1,5 +1,6 @@
 package com.solvd.pages;
 
+import com.solvd.utils.TimeConstants;
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.StaleElementReferenceException;
@@ -28,13 +29,14 @@ public class SearchResultsPage extends BasePage {
 
     public SearchResultsPage(WebDriver driver) {
         super(driver);
+        waitForPageOpened();
     }
 
     public void waitForPageOpened() {
         ensureFrontOfficeIframeOnce(productList);
 
         waitUntil(d ->
-                        (productList != null && productList.isElementPresent(1)) ||
+                        (productList != null && productList.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC)) ||
                                 (!productCards.isEmpty()) ||
                                 (!noMatchesHeader.isEmpty()) ||
                                 (!pageNotFoundSection.isEmpty()),
@@ -42,12 +44,10 @@ public class SearchResultsPage extends BasePage {
     }
 
     public boolean isDisplayed() {
-        waitForPageOpened();
         return productList.isElementPresent(getDefaultWaitTimeout()) || isNoMatchesMessageDisplayed();
     }
 
     public boolean hasAnyProductTitleContaining(String keyword) {
-        waitForPageOpened();
         String k = keyword.toLowerCase(Locale.ROOT);
 
         return productTitles.stream()
@@ -57,16 +57,13 @@ public class SearchResultsPage extends BasePage {
     }
 
     public boolean isNoMatchesMessageDisplayed() {
-        waitForPageOpened();
         waitUntil(d -> !noMatchesHeader.isEmpty() || !pageNotFoundSection.isEmpty() || !productCards.isEmpty(), getDefaultWaitTimeout());
-        return noMatchesHeader.stream().anyMatch(ExtendedWebElement::isDisplayed)
-                || pageNotFoundSection.stream().anyMatch(ExtendedWebElement::isDisplayed);
+        return noMatchesHeader.stream().anyMatch(e -> e != null && e.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC))
+                || pageNotFoundSection.stream().anyMatch(e -> e != null && e.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC));
     }
 
     public int getVisibleProductCardCount() {
-        waitForPageOpened();
-
-        final int shortTimeout = 1;
+        final int shortTimeout = TimeConstants.SHORT_TIMEOUT_SEC;
 
         waitUntil(d ->
                         productCards.stream().anyMatch(e -> e.isElementPresent(shortTimeout))
@@ -91,22 +88,19 @@ public class SearchResultsPage extends BasePage {
     }
 
     public ProductPage openFirstVisibleProduct() {
-        waitForPageOpened();
         ExtendedWebElement first = findFirstVisibleProductTitle();
         first.click();
         return new ProductPage(getDriver());
     }
 
     public String getFirstVisibleProductTitle() {
-        waitForPageOpened();
         return findFirstVisibleProductTitle().getText().trim();
     }
 
     public List<String> getVisibleProductTitles() {
-        waitForPageOpened();
         waitUntil(d -> productTitles != null && !productTitles.isEmpty(), getDefaultWaitTimeout());
         return productTitles.stream()
-                .filter(ExtendedWebElement::isDisplayed)
+                .filter(e -> e != null && e.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC))
                 .map(ExtendedWebElement::getText)
                 .map(String::trim)
                 .filter(s -> !s.isBlank())
@@ -127,7 +121,7 @@ public class SearchResultsPage extends BasePage {
     private boolean isVisibleSafe(ExtendedWebElement element, long timeoutSec) {
         if (element == null) return false;
         try {
-            return element.isElementPresent(timeoutSec) && element.isDisplayed();
+            return element.isElementPresent(timeoutSec);
         } catch (StaleElementReferenceException ignored) {
             return false;
         }

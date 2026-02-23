@@ -44,6 +44,7 @@ public class CartPage extends BasePage {
 
     public CartPage(WebDriver driver) {
         super(driver);
+        waitForPageOpened();
     }
 
     public void waitForPageOpened() {
@@ -62,8 +63,6 @@ public class CartPage extends BasePage {
     }
 
     public int getQuantity() {
-        waitForPageOpened();
-
         ExtendedWebElement quantityInput = findFirstVisibleElement(cartItemQuantities);
         if (quantityInput == null) {
             return 0;
@@ -78,18 +77,14 @@ public class CartPage extends BasePage {
     }
 
     public BigDecimal getProductsSubtotal() {
-        waitForPageOpened();
         return readMoneyFrom(subtotal);
     }
 
     public BigDecimal getTotal() {
-        waitForPageOpened();
         return readMoneyFrom(total);
     }
 
     public void increaseQuantityTo(int targetQuantity) {
-        waitForPageOpened();
-
         while (getQuantity() < targetQuantity) {
             ExtendedWebElement plusButton = findFirstVisibleElement(quantityPlusButtons);
             if (plusButton == null || !plusButton.isEnabled()) {
@@ -104,15 +99,11 @@ public class CartPage extends BasePage {
     }
 
     public int getCartLinesCount() {
-        waitForPageOpened();
-
         if (findFirstVisibleElement(emptyCartMessage) != null) return 0;
         return (int) cartItems.stream().filter(el -> el != null && el.isDisplayed()).count();
     }
 
     public void removeFirstLine() {
-        waitForPageOpened();
-
         if (isEmptyCartMessageDisplayed()) {
             return;
         }
@@ -133,13 +124,10 @@ public class CartPage extends BasePage {
     }
 
     public boolean isEmptyCartMessageDisplayed() {
-        waitForPageOpened();
         return findFirstVisibleElement(emptyCartMessage) != null;
     }
 
     public int cartCountElement() {
-        waitForPageOpened();
-
         ExtendedWebElement el = findFirstVisibleElement(cartCount);
         if (el == null) return 0;
 

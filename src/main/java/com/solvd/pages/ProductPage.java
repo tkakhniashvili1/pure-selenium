@@ -50,6 +50,7 @@ public class ProductPage extends BasePage {
 
     public ProductPage(WebDriver driver) {
         super(driver);
+        waitForPageOpened();
     }
 
     public void waitForPageOpened() {
@@ -58,49 +59,44 @@ public class ProductPage extends BasePage {
     }
 
     public String getTitle() {
-        waitForPageOpened();
         return productTitle.getText().trim();
     }
 
     public boolean isAddToCartVisibleAndEnabled() {
-        waitForPageOpened();
         return addToCartButton.isDisplayed() && addToCartButton.isEnabled();
     }
 
     public void selectRequiredOptionsIfPresent() {
-        waitForPageOpened();
-
         for (ExtendedWebElement selectVariant : variantSelects) {
             if (selectVariant == null || !selectVariant.isVisible()) continue;
 
             List<ExtendedWebElement> options = selectVariant.findExtendedWebElements(By.tagName("option"));
             for (ExtendedWebElement option : options) {
-                if (option != null && option.isVisible() && option.isEnabled()) {
-                    String value = option.getAttribute("value");
-                    if (value != null && !value.isBlank()) {
-                        option.click();
-                        break;
-                    }
+                if (option == null || !option.isVisible() || !option.isEnabled()) continue;
+
+                String value = option.getAttribute("value");
+                if (value != null && !value.isBlank()) {
+                    option.click();
+                    break;
                 }
+            }
+        }
 
-                Set<String> pickedNames = new HashSet<>();
-                for (ExtendedWebElement variantRadio : variantRadios) {
-                    if (variantRadio == null || !variantRadio.isVisible() || !variantRadio.isEnabled()) continue;
+        Set<String> pickedNames = new HashSet<>();
+        for (ExtendedWebElement variantRadio : variantRadios) {
+            if (variantRadio == null || !variantRadio.isVisible() || !variantRadio.isEnabled()) continue;
 
-                    String name = variantRadio.getAttribute("name");
-                    if (name == null || name.isBlank()) continue;
-                    if (!pickedNames.add(name)) continue;
+            String name = variantRadio.getAttribute("name");
+            if (name == null || name.isBlank()) continue;
+            if (!pickedNames.add(name)) continue;
 
-                    if (!variantRadio.isSelected()) {
-                        variantRadio.click();
-                    }
-                }
+            if (!variantRadio.isSelected()) {
+                variantRadio.click();
             }
         }
     }
 
     public void addToCart() {
-        waitForPageOpened();
         addToCartButton.click();
     }
 
@@ -143,9 +139,8 @@ public class ProductPage extends BasePage {
         proceedToCheckoutButton.click();
 
         getDriver().switchTo().defaultContent();
-
         CartPage cartPage = new CartPage(getDriver());
-        cartPage.waitForPageOpened();
+
         return cartPage;
     }
 

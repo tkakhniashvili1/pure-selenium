@@ -21,6 +21,7 @@ public class HomePage extends BasePage {
 
     public HomePage(WebDriver driver) {
         super(driver);
+        waitForPageOpened();
     }
 
     public void waitForPageOpened() {
@@ -29,8 +30,6 @@ public class HomePage extends BasePage {
     }
 
     public SearchResultsPage search(String query) {
-        waitForPageOpened();
-
         searchInput.click();
         searchInput.getElement().clear();
         searchInput.type(query);
@@ -45,8 +44,6 @@ public class HomePage extends BasePage {
     }
 
     public String getSearchKeywordFromHome() {
-        waitForPageOpened();
-
         ExtendedWebElement first = productTitleLinks.stream()
                 .filter(e -> e.isElementPresent(1))
                 .findFirst()
@@ -66,8 +63,6 @@ public class HomePage extends BasePage {
     }
 
     public ProductPage openFirstProduct() {
-        waitForPageOpened();
-
         ExtendedWebElement first = productTitleLinks.stream()
                 .filter(e -> e.isElementPresent(3))
                 .findFirst()
