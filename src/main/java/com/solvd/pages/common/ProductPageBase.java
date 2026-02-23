@@ -1,15 +1,17 @@
 package com.solvd.pages.common;
 
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
-import org.openqa.selenium.*;
+import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.StaleElementReferenceException;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.FindBy;
-import org.openqa.selenium.support.ui.Select;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.solvd.utils.ParseUtil.parseCount;
+import static com.solvd.utils.ParseUtils.parseCount;
 
 public abstract class ProductPageBase extends BasePage {
 
@@ -48,63 +50,53 @@ public abstract class ProductPageBase extends BasePage {
 
     public ProductPageBase(WebDriver driver) {
         super(driver);
+        waitForPageOpened();
     }
 
-    protected abstract By getPageReadyLocator();
-
     public void waitForPageOpened() {
-        ensureFrontOfficeIframeOnce(getPageReadyLocator());
+        ensureFrontOfficeIframeOnce(productTitle);
         productTitle.isElementPresent(getDefaultWaitTimeout());
     }
 
     public String getTitle() {
-        waitForPageOpened();
         return productTitle.getText().trim();
     }
 
     public boolean isAddToCartVisibleAndEnabled() {
-        waitForPageOpened();
         return addToCartButton.isDisplayed() && addToCartButton.isEnabled();
     }
 
     public void selectRequiredOptionsIfPresent() {
-        waitForPageOpened();
-
         for (ExtendedWebElement selectVariant : variantSelects) {
-            if (selectVariant == null || !selectVariant.isElementPresent(1)) continue;
+            if (selectVariant == null || !selectVariant.isVisible()) continue;
 
-            Select select = new Select(selectVariant.getElement());
-            select.getOptions().stream()
-                    .filter(WebElement::isEnabled)
-                    .map(opt -> opt.getAttribute("value"))
-                    .filter(v -> v != null && !v.isBlank())
-                    .findFirst()
-                    .ifPresent(select::selectByValue);
+            List<ExtendedWebElement> options = selectVariant.findExtendedWebElements(By.tagName("option"));
+            for (ExtendedWebElement option : options) {
+                if (option == null || !option.isVisible() || !option.isEnabled()) continue;
+
+                String value = option.getAttribute("value");
+                if (value != null && !value.isBlank()) {
+                    option.click();
+                    break;
+                }
+            }
         }
 
         Set<String> pickedNames = new HashSet<>();
-        for (ExtendedWebElement radioEl : variantRadios) {
-            if (radioEl == null || !radioEl.isElementPresent(1)) continue;
+        for (ExtendedWebElement variantRadio : variantRadios) {
+            if (variantRadio == null || !variantRadio.isVisible() || !variantRadio.isEnabled()) continue;
 
-            WebElement input = radioEl.getElement();
-            String name = input.getAttribute("name");
+            String name = variantRadio.getAttribute("name");
             if (name == null || name.isBlank()) continue;
             if (!pickedNames.add(name)) continue;
-            if (!input.isEnabled()) continue;
 
-            if (!input.isSelected()) {
-                try {
-                    WebElement label = input.findElement(By.xpath("./ancestor::label[1]"));
-                    label.click();
-                } catch (Exception e) {
-                    ((JavascriptExecutor) getDriver()).executeScript("arguments[0].click();", input);
-                }
+            if (!variantRadio.isSelected()) {
+                variantRadio.click();
             }
         }
     }
 
     public void addToCart() {
-        waitForPageOpened();
         addToCartButton.click();
     }
 
@@ -145,10 +137,10 @@ public abstract class ProductPageBase extends BasePage {
 
     public CartPageBase openCartFromModal() {
         proceedToCheckoutButton.click();
-        getDriver().switchTo().defaultContent();
 
-        CartPageBase cartPage = initPage(getDriver(), CartPageBase.class);
-        cartPage.waitForPageOpened();
+        getDriver().switchTo().defaultContent();
+        CartPageBase cartPage = PageFactory.initPage(getDriver(), CartPageBase.class);
+
         return cartPage;
     }
 

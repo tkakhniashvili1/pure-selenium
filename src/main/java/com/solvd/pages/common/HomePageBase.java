@@ -1,7 +1,6 @@
 package com.solvd.pages.common;
 
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
-import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
@@ -22,18 +21,15 @@ public abstract class HomePageBase extends BasePage {
 
     public HomePageBase(WebDriver driver) {
         super(driver);
+        waitForPageOpened();
     }
 
-    protected abstract By getPageReadyLocator();
-
     public void waitForPageOpened() {
-        ensureFrontOfficeIframeOnce(getPageReadyLocator());
+        ensureFrontOfficeIframeOnce(searchInput);
         searchInput.isElementPresent(getDefaultWaitTimeout());
     }
 
     public SearchResultsPageBase search(String query) {
-        waitForPageOpened();
-
         searchInput.click();
         searchInput.getElement().clear();
         searchInput.type(query);
@@ -44,12 +40,10 @@ public abstract class HomePageBase extends BasePage {
             searchInput.getElement().sendKeys(Keys.ENTER);
         }
 
-        return initPage(getDriver(), SearchResultsPageBase.class);
+        return PageFactory.initPage(getDriver(), SearchResultsPageBase.class);
     }
 
     public String getSearchKeywordFromHome() {
-        waitForPageOpened();
-
         ExtendedWebElement first = productTitleLinks.stream()
                 .filter(e -> e.isElementPresent(1))
                 .findFirst()
@@ -72,7 +66,7 @@ public abstract class HomePageBase extends BasePage {
         waitForPageOpened();
 
         ExtendedWebElement first = productTitleLinks.stream()
-                .filter(e -> e.isElementPresent(1))
+                .filter(e -> e.isElementPresent(getDefaultWaitTimeout()))
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException("No displayed home product"));
 
@@ -81,6 +75,6 @@ public abstract class HomePageBase extends BasePage {
         }
 
         first.click();
-        return initPage(getDriver(), ProductPageBase.class);
+        return PageFactory.initPage(getDriver(), ProductPageBase.class);
     }
 }

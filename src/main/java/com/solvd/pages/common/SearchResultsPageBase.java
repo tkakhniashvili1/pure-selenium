@@ -1,7 +1,7 @@
 package com.solvd.pages.common;
 
+import com.solvd.utils.TimeConstants;
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
-import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebDriver;
@@ -29,15 +29,14 @@ public abstract class SearchResultsPageBase extends BasePage {
 
     public SearchResultsPageBase(WebDriver driver) {
         super(driver);
+        waitForPageOpened();
     }
 
-    protected abstract By getPageReadyLocator();
-
     public void waitForPageOpened() {
-        ensureFrontOfficeIframeOnce(getPageReadyLocator());
+        ensureFrontOfficeIframeOnce(productList);
 
         waitUntil(d ->
-                        (productList != null && productList.isElementPresent(1)) ||
+                        (productList != null && productList.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC)) ||
                                 (!productCards.isEmpty()) ||
                                 (!noMatchesHeader.isEmpty()) ||
                                 (!pageNotFoundSection.isEmpty()),
@@ -45,12 +44,10 @@ public abstract class SearchResultsPageBase extends BasePage {
     }
 
     public boolean isDisplayed() {
-        waitForPageOpened();
         return productList.isElementPresent(getDefaultWaitTimeout()) || isNoMatchesMessageDisplayed();
     }
 
     public boolean hasAnyProductTitleContaining(String keyword) {
-        waitForPageOpened();
         String k = keyword.toLowerCase(Locale.ROOT);
 
         return productTitles.stream()
@@ -60,24 +57,29 @@ public abstract class SearchResultsPageBase extends BasePage {
     }
 
     public boolean isNoMatchesMessageDisplayed() {
-        waitForPageOpened();
         waitUntil(d -> !noMatchesHeader.isEmpty() || !pageNotFoundSection.isEmpty() || !productCards.isEmpty(), getDefaultWaitTimeout());
-        return noMatchesHeader.stream().anyMatch(ExtendedWebElement::isDisplayed)
-                || pageNotFoundSection.stream().anyMatch(ExtendedWebElement::isDisplayed);
+        return noMatchesHeader.stream().anyMatch(e -> e != null && e.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC))
+                || pageNotFoundSection.stream().anyMatch(e -> e != null && e.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC));
     }
 
     public int getVisibleProductCardCount() {
-        waitForPageOpened();
-        waitUntil(d -> productCards.stream().anyMatch(ExtendedWebElement::isDisplayed)
-                || noMatchesHeader.stream().anyMatch(ExtendedWebElement::isDisplayed)
-                || pageNotFoundSection.stream().anyMatch(ExtendedWebElement::isDisplayed), getDefaultWaitTimeout());
+        final int shortTimeout = TimeConstants.SHORT_TIMEOUT_SEC;
+
+        waitUntil(d ->
+                        productCards.stream().anyMatch(e -> e.isElementPresent(shortTimeout))
+                                || noMatchesHeader.stream().anyMatch(e -> e.isElementPresent(shortTimeout))
+                                || pageNotFoundSection.stream().anyMatch(e -> e.isElementPresent(shortTimeout)),
+                getDefaultWaitTimeout()
+        );
 
         if (isNoMatchesMessageDisplayed()) return 0;
 
         int retries = 2;
         for (int i = 0; i < retries; i++) {
             try {
-                return (int) productCards.stream().filter(ExtendedWebElement::isDisplayed).count();
+                return (int) productCards.stream()
+                        .filter(e -> e.isElementPresent(shortTimeout))
+                        .count();
             } catch (StaleElementReferenceException e) {
                 if (i == retries - 1) throw e;
             }
@@ -86,22 +88,19 @@ public abstract class SearchResultsPageBase extends BasePage {
     }
 
     public ProductPageBase openFirstVisibleProduct() {
-        waitForPageOpened();
         ExtendedWebElement first = findFirstVisibleProductTitle();
         first.click();
-        return initPage(getDriver(), ProductPageBase.class);
+        return PageFactory.initPage(getDriver(), ProductPageBase.class);
     }
 
     public String getFirstVisibleProductTitle() {
-        waitForPageOpened();
         return findFirstVisibleProductTitle().getText().trim();
     }
 
     public List<String> getVisibleProductTitles() {
-        waitForPageOpened();
         waitUntil(d -> productTitles != null && !productTitles.isEmpty(), getDefaultWaitTimeout());
         return productTitles.stream()
-                .filter(ExtendedWebElement::isDisplayed)
+                .filter(e -> e != null && e.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC))
                 .map(ExtendedWebElement::getText)
                 .map(String::trim)
                 .filter(s -> !s.isBlank())
@@ -122,7 +121,7 @@ public abstract class SearchResultsPageBase extends BasePage {
     private boolean isVisibleSafe(ExtendedWebElement element, long timeoutSec) {
         if (element == null) return false;
         try {
-            return element.isElementPresent(timeoutSec) && element.isDisplayed();
+            return element.isElementPresent(timeoutSec);
         } catch (StaleElementReferenceException ignored) {
             return false;
         }
