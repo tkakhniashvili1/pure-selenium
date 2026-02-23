@@ -1,7 +1,15 @@
 package com.solvd.tests;
 
-import com.solvd.pages.*;
+import com.solvd.pages.CartPage;
+import com.solvd.pages.HomePage;
+import com.solvd.pages.ProductPage;
+import com.solvd.pages.SearchResultsPage;
+import com.zebrunner.carina.core.AbstractTest;
+import com.zebrunner.carina.utils.R;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
@@ -9,6 +17,14 @@ import java.math.BigDecimal;
 import static com.solvd.utils.TextUtils.normalizeText;
 
 public class ECommerceTests extends AbstractTest {
+
+    @Parameters({"capabilities.browserName"})
+    @BeforeMethod(alwaysRun = true)
+    public void setBrowserName(@Optional("") String browserName) {
+        if (browserName != null && !browserName.isBlank()) {
+            R.CONFIG.put("capabilities.browserName", browserName, true);
+        }
+    }
 
     @Test
     public void verifySuccessfulProductSearch() {
@@ -102,7 +118,7 @@ public class ECommerceTests extends AbstractTest {
         Assert.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
 
         CartPage cartPage = productPage.openCartFromModal();
-        Assert.assertTrue(cartPage.isPageOpened(), "Cart page not displayed (cart lines not visible).");
+        Assert.assertTrue(cartPage.isDisplayed(), "Cart page not displayed (cart lines not visible).");
 
         BigDecimal subtotal1 = cartPage.getProductsSubtotal();
         BigDecimal total1 = cartPage.getTotal();
@@ -115,7 +131,7 @@ public class ECommerceTests extends AbstractTest {
         BigDecimal subtotal2 = cartPage.getProductsSubtotal();
         BigDecimal total2 = cartPage.getTotal();
 
-        Assert.assertTrue(subtotal2.compareTo(subtotal1) > 0, "Products subtotal should increase after quantity increase.");
+        Assert.assertTrue(subtotal2.compareTo(subtotal1) > 0, "Products subtotal should change after quantity increase.");
         Assert.assertTrue(total2.compareTo(total1) > 0, "Total should increase after quantity increase.");
     }
 
@@ -130,7 +146,7 @@ public class ECommerceTests extends AbstractTest {
         Assert.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
 
         CartPage cartPage = productPage.openCartFromModal();
-        Assert.assertTrue(cartPage.isPageOpened(), "Cart page not displayed.");
+        Assert.assertTrue(cartPage.isDisplayed(), "Cart page not displayed.");
 
         Assert.assertTrue(cartPage.getCartLinesCount() > 0, "Cart should have at least 1 product line.");
 
@@ -138,6 +154,6 @@ public class ECommerceTests extends AbstractTest {
 
         Assert.assertEquals(cartPage.getCartLinesCount(), 0, "Product line should be removed from the cart.");
         Assert.assertTrue(cartPage.isEmptyCartMessageDisplayed(), "Empty cart message should be displayed.");
-        Assert.assertEquals(cartPage.getHeaderCartCount(), 0, "Cart quantity indicator should be 0.");
+        Assert.assertEquals(cartPage.cartCountElement(), 0, "Cart quantity indicator should be 0.");
     }
 }
