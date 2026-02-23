@@ -10,7 +10,8 @@ public final class PageFactory {
     private static final String ANDROID_PKG = ".pages.android.";
     private static final String DESKTOP_PKG = ".pages.desktop.";
 
-    private PageFactory() { }
+    private PageFactory() {
+    }
 
     public static <T> T initPage(WebDriver driver, Class<T> baseClass) {
         String implClassName = resolveImplClassName(driver, baseClass);
