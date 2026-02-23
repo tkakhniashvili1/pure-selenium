@@ -48,6 +48,26 @@ public abstract class BasePage extends AbstractPage {
         waitUntil(d -> isAnyElementDisplayed(d, probeBy), timeout);
     }
 
+//    private void openBaseUrlIfNeeded(WebDriver driver) {
+//        String baseUrl = Configuration.getRequired("url");
+//
+//        String currentUrl;
+//        try {
+//            currentUrl = driver.getCurrentUrl();
+//        } catch (Exception e) {
+//            currentUrl = null;
+//        }
+//
+//        if (currentUrl == null
+//                || currentUrl.isBlank()
+//                || currentUrl.equals("about:blank")
+//                || currentUrl.startsWith("data:")
+//                || currentUrl.startsWith("chrome://")
+//                || currentUrl.startsWith("chrome-search://")) {
+//            driver.get(baseUrl);
+//        }
+//    }
+
     private void openBaseUrlIfNeeded(WebDriver driver) {
         String baseUrl = Configuration.getRequired("url");
 
@@ -58,12 +78,12 @@ public abstract class BasePage extends AbstractPage {
             currentUrl = null;
         }
 
-        if (currentUrl == null
-                || currentUrl.isBlank()
-                || currentUrl.equals("about:blank")
-                || currentUrl.startsWith("data:")
-                || currentUrl.startsWith("chrome://")
-                || currentUrl.startsWith("chrome-search://")) {
+        boolean needsNavigation =
+                currentUrl == null ||
+                        currentUrl.isBlank() ||
+                        !(currentUrl.startsWith("http://") || currentUrl.startsWith("https://"));
+
+        if (needsNavigation) {
             driver.get(baseUrl);
         }
     }

@@ -11,12 +11,16 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
+import org.testng.asserts.SoftAssert;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 
 import static com.solvd.utils.UiActions.normalizeText;
 
 public class ECommerceTests extends AbstractTest {
+
+    private SoftAssert softly;
 
     @Parameters({"capabilities.browserName"})
     @BeforeMethod(alwaysRun = true)
@@ -25,7 +29,7 @@ public class ECommerceTests extends AbstractTest {
             R.CONFIG.put("capabilities.browserName", browserName, true);
         }
     }
-
+    
     @Test
     public void verifySuccessfulProductSearch() {
         HomePageBase homePage = initPage(getDriver(), HomePageBase.class);
