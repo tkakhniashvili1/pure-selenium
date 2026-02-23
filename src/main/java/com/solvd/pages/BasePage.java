@@ -78,13 +78,4 @@ public abstract class BasePage extends AbstractPage {
         ensureFrontOfficeIframe(probeElement);
         frontOfficeIframeEnsured = true;
     }
-
-//    private boolean isInsideIframe() {
-//        try {
-//            return Boolean.TRUE.equals(((JavascriptExecutor) getDriver())
-//                    .executeScript("return window.self !== window.top;"));
-//        } catch (Exception e) {
-//            return false;
-//        }
-//    }
 }
