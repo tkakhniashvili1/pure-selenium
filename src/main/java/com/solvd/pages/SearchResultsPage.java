@@ -1,82 +1,88 @@
 package com.solvd.pages;
 
-import org.openqa.selenium.By;
+import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.StaleElementReferenceException;
-import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 
 import java.util.List;
 import java.util.Locale;
 
-public class SearchResultsPage extends AbstractPage {
-
-    private static final By PAGE_READY_LOCATOR = By.cssSelector("#js-product-list");
-    private boolean loaded = false;
+public class SearchResultsPage extends BasePage {
 
     @FindBy(css = "#js-product-list")
-    private WebElement productList;
+    private ExtendedWebElement productList;
 
     @FindBy(css = "#js-product-list .product-miniature")
-    private List<WebElement> productCards;
+    private List<ExtendedWebElement> productCards;
 
     @FindBy(css = "#js-product-list .product-title a")
-    private List<WebElement> productTitles;
+    private List<ExtendedWebElement> productTitles;
 
     @FindBy(id = "product-search-no-matches")
-    private List<WebElement> noMatchesHeader;
+    private List<ExtendedWebElement> noMatchesHeader;
 
     @FindBy(css = "#content.page-content.page-not-found")
-    private List<WebElement> pageNotFoundSection;
+    private List<ExtendedWebElement> pageNotFoundSection;
 
     public SearchResultsPage(WebDriver driver) {
         super(driver);
-        waitForLoaded();
     }
 
-    public void waitForLoaded() {
-        if (loaded) return;
-        switchToFrontOfficeFrameIfNeeded(PAGE_READY_LOCATOR);
-        loaded = true;
+    public void waitForPageOpened() {
+        ensureFrontOfficeIframeOnce(productList);
+
+        waitUntil(d ->
+                        (productList != null && productList.isElementPresent(1)) ||
+                                (!productCards.isEmpty()) ||
+                                (!noMatchesHeader.isEmpty()) ||
+                                (!pageNotFoundSection.isEmpty()),
+                getDefaultWaitTimeout());
     }
 
     public boolean isDisplayed() {
-        try {
-            wait.until(d -> productList.isDisplayed());
-            return true;
-        } catch (TimeoutException | NoSuchElementException | StaleElementReferenceException e) {
-            return isNoMatchesMessageDisplayed();
-        }
+        waitForPageOpened();
+        return productList.isElementPresent(getDefaultWaitTimeout()) || isNoMatchesMessageDisplayed();
     }
 
     public boolean hasAnyProductTitleContaining(String keyword) {
+        waitForPageOpened();
         String k = keyword.toLowerCase(Locale.ROOT);
 
         return productTitles.stream()
-                .map(WebElement::getText)
+                .map(ExtendedWebElement::getText)
                 .map(t -> t.toLowerCase(Locale.ROOT))
                 .anyMatch(t -> t.contains(k));
     }
 
     public boolean isNoMatchesMessageDisplayed() {
-        wait.until(d -> !noMatchesHeader.isEmpty() || !pageNotFoundSection.isEmpty() || !productCards.isEmpty());
-        return noMatchesHeader.stream().anyMatch(WebElement::isDisplayed)
-                || pageNotFoundSection.stream().anyMatch(WebElement::isDisplayed);
+        waitForPageOpened();
+        waitUntil(d -> !noMatchesHeader.isEmpty() || !pageNotFoundSection.isEmpty() || !productCards.isEmpty(), getDefaultWaitTimeout());
+        return noMatchesHeader.stream().anyMatch(ExtendedWebElement::isDisplayed)
+                || pageNotFoundSection.stream().anyMatch(ExtendedWebElement::isDisplayed);
     }
 
     public int getVisibleProductCardCount() {
-        wait.until(d -> productCards.stream().anyMatch(WebElement::isDisplayed)
-                || noMatchesHeader.stream().anyMatch(WebElement::isDisplayed)
-                || pageNotFoundSection.stream().anyMatch(WebElement::isDisplayed));
+        waitForPageOpened();
+
+        final int shortTimeout = 1;
+
+        waitUntil(d ->
+                        productCards.stream().anyMatch(e -> e.isElementPresent(shortTimeout))
+                                || noMatchesHeader.stream().anyMatch(e -> e.isElementPresent(shortTimeout))
+                                || pageNotFoundSection.stream().anyMatch(e -> e.isElementPresent(shortTimeout)),
+                getDefaultWaitTimeout()
+        );
 
         if (isNoMatchesMessageDisplayed()) return 0;
 
         int retries = 2;
         for (int i = 0; i < retries; i++) {
             try {
-                return (int) productCards.stream().filter(WebElement::isDisplayed).count();
+                return (int) productCards.stream()
+                        .filter(e -> e.isElementPresent(shortTimeout))
+                        .count();
             } catch (StaleElementReferenceException e) {
                 if (i == retries - 1) throw e;
             }
@@ -85,37 +91,45 @@ public class SearchResultsPage extends AbstractPage {
     }
 
     public ProductPage openFirstVisibleProduct() {
-        WebElement first = findFirstVisibleProductTitle();
-        click(first, "firstVisibleProductTitle");
-        return new ProductPage(driver);
+        waitForPageOpened();
+        ExtendedWebElement first = findFirstVisibleProductTitle();
+        first.click();
+        return new ProductPage(getDriver());
     }
 
     public String getFirstVisibleProductTitle() {
+        waitForPageOpened();
         return findFirstVisibleProductTitle().getText().trim();
     }
 
     public List<String> getVisibleProductTitles() {
-        wait.until(d -> productTitles != null && !productTitles.isEmpty());
+        waitForPageOpened();
+        waitUntil(d -> productTitles != null && !productTitles.isEmpty(), getDefaultWaitTimeout());
         return productTitles.stream()
-                .filter(WebElement::isDisplayed)
-                .map(WebElement::getText)
+                .filter(ExtendedWebElement::isDisplayed)
+                .map(ExtendedWebElement::getText)
                 .map(String::trim)
                 .filter(s -> !s.isBlank())
                 .toList();
     }
 
-    private WebElement findFirstVisibleProductTitle() {
-        return wait.until(driver ->
-                productTitles.stream()
-                        .filter(e -> {
-                            try {
-                                return e.isDisplayed();
-                            } catch (StaleElementReferenceException ex) {
-                                return false;
-                            }
-                        })
-                        .findFirst()
-                        .orElseThrow(() -> new NoSuchElementException("No visible product titles found"))
-        );
+    private ExtendedWebElement findFirstVisibleProductTitle() {
+        long timeoutSec = getDefaultWaitTimeout().getSeconds();
+
+        waitUntil(d -> productTitles.stream().anyMatch(e -> isVisibleSafe(e, timeoutSec)), timeoutSec);
+
+        return productTitles.stream()
+                .filter(e -> isVisibleSafe(e, timeoutSec))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("No visible product titles found"));
+    }
+
+    private boolean isVisibleSafe(ExtendedWebElement element, long timeoutSec) {
+        if (element == null) return false;
+        try {
+            return element.isElementPresent(timeoutSec) && element.isDisplayed();
+        } catch (StaleElementReferenceException ignored) {
+            return false;
+        }
     }
 }
