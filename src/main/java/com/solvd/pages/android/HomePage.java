@@ -1,6 +1,8 @@
 package com.solvd.pages.android;
 
 import com.solvd.pages.common.HomePageBase;
+import com.solvd.pages.common.ProductPageBase;
+import com.solvd.pages.common.SearchResultsPageBase;
 import com.zebrunner.carina.utils.factory.DeviceType;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -17,5 +19,17 @@ public class HomePage extends HomePageBase {
     @Override
     protected By getPageReadyLocator() {
         return PAGE_READY_LOCATOR;
+    }
+
+    @Override
+    public String getSearchKeywordFromHome() {
+        waitForPageOpened();
+        return "dress";
+    }
+
+    @Override
+    public ProductPageBase openFirstProduct() {
+        SearchResultsPageBase results = search(getSearchKeywordFromHome());
+        return results.openFirstVisibleProduct();
     }
 }
