@@ -1,8 +1,8 @@
 package com.solvd.utils;
 
-public final class ParseUtil {
+public final class ParseUtils {
 
-    private ParseUtil() {
+    private ParseUtils() {
     }
 
     public static int parseCount(String raw) {
