@@ -10,6 +10,9 @@ import org.openqa.selenium.support.FindBy;
 import java.math.BigDecimal;
 import java.util.List;
 
+import static com.solvd.utils.ParseUtil.parseIntegerFromText;
+import static com.solvd.utils.ParseUtil.parseMoney;
+
 public class CartPage extends BasePage {
 
     private static final String ATTRIBUTE_VALUE = "value";
@@ -147,24 +150,6 @@ public class CartPage extends BasePage {
             }
         }
         return null;
-    }
-
-    private int parseIntegerFromText(String raw) {
-        if (raw == null) return 0;
-        String digits = raw.replaceAll("[^0-9]", "");
-        return digits.isEmpty() ? 0 : Integer.parseInt(digits);
-    }
-
-    private BigDecimal parseMoney(String raw) {
-        if (raw == null) return BigDecimal.ZERO;
-
-        String s = raw.replaceAll("[^0-9,\\.]", "");
-
-        long commas = s.chars().filter(ch -> ch == ',').count();
-        if (commas == 1 && s.indexOf('.') == -1) s = s.replace(',', '.');
-        else s = s.replace(",", "");
-
-        return s.isBlank() ? BigDecimal.ZERO : new BigDecimal(s);
     }
 
     private BigDecimal readMoneyFrom(List<ExtendedWebElement> elements) {
