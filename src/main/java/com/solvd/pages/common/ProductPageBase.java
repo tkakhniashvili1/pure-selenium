@@ -1,5 +1,6 @@
 package com.solvd.pages.common;
 
+import com.solvd.utils.TimeConstants;
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
@@ -34,10 +35,10 @@ public abstract class ProductPageBase extends BasePage {
     private ExtendedWebElement proceedToCheckoutButton;
 
     @FindBy(css = "#_desktop_cart .cart-products-count")
-    private List<ExtendedWebElement> desktopCartCount;
+    private ExtendedWebElement desktopCartCount;
 
     @FindBy(css = "#_mobile_cart .cart-products-count")
-    private List<ExtendedWebElement> mobileCartCount;
+    private ExtendedWebElement mobileCartCount;
 
     @FindBy(css = "#blockcart-modal .cart-content p.cart-products-count")
     private ExtendedWebElement modalCartItemsLine;
@@ -55,48 +56,23 @@ public abstract class ProductPageBase extends BasePage {
 
     public void waitForPageOpened() {
         ensureFrontOfficeIframeOnce(productTitle);
-        productTitle.isElementPresent(getDefaultWaitTimeout());
+        productTitle.isElementPresent();
     }
 
     public String getTitle() {
         return productTitle.getText().trim();
     }
 
-    public boolean isAddToCartVisibleAndEnabled() {
-        return addToCartButton.isDisplayed() && addToCartButton.isEnabled();
+    public boolean isAddToCartButtonPresent() {
+        return addToCartButton.isElementPresent(getDefaultWaitTimeout()) && addToCartButton.isEnabled();
     }
 
     public void selectRequiredOptionsIfPresent() {
-        for (ExtendedWebElement selectVariant : variantSelects) {
-            if (selectVariant == null || !selectVariant.isVisible()) continue;
-
-            List<ExtendedWebElement> options = selectVariant.findExtendedWebElements(By.tagName("option"));
-            for (ExtendedWebElement option : options) {
-                if (option == null || !option.isVisible() || !option.isEnabled()) continue;
-
-                String value = option.getAttribute("value");
-                if (value != null && !value.isBlank()) {
-                    option.click();
-                    break;
-                }
-            }
-        }
-
-        Set<String> pickedNames = new HashSet<>();
-        for (ExtendedWebElement variantRadio : variantRadios) {
-            if (variantRadio == null || !variantRadio.isVisible() || !variantRadio.isEnabled()) continue;
-
-            String name = variantRadio.getAttribute("name");
-            if (name == null || name.isBlank()) continue;
-            if (!pickedNames.add(name)) continue;
-
-            if (!variantRadio.isSelected()) {
-                variantRadio.click();
-            }
-        }
+        selectFirstAvailableOptions(variantSelects, "option");
+        selectFirstAvailableRadios(variantRadios);
     }
 
-    public void addToCart() {
+    public void addProductToCart() {
         addToCartButton.click();
     }
 
@@ -121,32 +97,62 @@ public abstract class ProductPageBase extends BasePage {
         return parseCount(el.getText());
     }
 
-    public int waitForCartCountToIncrease(int initialCount) {
-        int expectedCount = initialCount + 1;
+    public int waitForCartCountToBeIncremented(int initialCount) {
+        final int expectedCount = initialCount + 1;
+        final ExtendedWebElement[] holder = {getFirstAvailableCartCountElement()};
 
         waitUntil(d -> {
             try {
-                return getCartCount() >= expectedCount;
-            } catch (StaleElementReferenceException | NoSuchElementException ignored) {
+                return holder[0] != null && parseCount(holder[0].getText()) >= expectedCount;
+            } catch (StaleElementReferenceException | NoSuchElementException e) {
+                holder[0] = getFirstAvailableCartCountElement();
                 return false;
             }
         }, getDefaultWaitTimeout());
 
-        return getCartCount();
+        return holder[0] == null ? 0 : parseCount(holder[0].getText());
     }
 
     public CartPageBase openCartFromModal() {
         proceedToCheckoutButton.click();
-
-        getDriver().switchTo().defaultContent();
-        CartPageBase cartPage = PageFactory.initPage(getDriver(), CartPageBase.class);
-
-        return cartPage;
+        return initPage(getDriver(), CartPageBase.class);
     }
 
     private ExtendedWebElement getFirstAvailableCartCountElement() {
-        if (desktopCartCount != null && !desktopCartCount.isEmpty()) return desktopCartCount.get(0);
-        if (mobileCartCount != null && !mobileCartCount.isEmpty()) return mobileCartCount.get(0);
+        if (desktopCartCount.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC)) return desktopCartCount;
+        if (mobileCartCount.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC)) return mobileCartCount;
         return null;
+    }
+
+    private void selectFirstAvailableOptions(List<ExtendedWebElement> selects, String tagName) {
+        for (ExtendedWebElement select : selects) {
+            if (!select.isElementPresent(getDefaultWaitTimeout())) continue;
+
+            List<ExtendedWebElement> options = select.findExtendedWebElements(By.tagName(tagName));
+            for (ExtendedWebElement option : options) {
+                if (!option.isElementPresent(getDefaultWaitTimeout())) continue;
+
+                String value = option.getAttribute("value");
+                if (value != null && !value.isBlank()) {
+                    option.click();
+                    break;
+                }
+            }
+        }
+    }
+
+    private void selectFirstAvailableRadios(List<ExtendedWebElement> radios) {
+        Set<String> pickedNames = new HashSet<>();
+
+        for (ExtendedWebElement radio : radios) {
+            if (!radio.isElementPresent(getDefaultWaitTimeout())) continue;
+
+            String name = radio.getAttribute("name");
+            if (name == null || name.isBlank() || !pickedNames.add(name)) continue;
+
+            if (!radio.isSelected()) {
+                radio.click();
+            }
+        }
     }
 }
