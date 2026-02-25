@@ -57,9 +57,8 @@ public abstract class SearchResultsPageBase extends BasePage {
     }
 
     public boolean isNoMatchesMessageDisplayed() {
-        waitUntil(d -> !noMatchesHeader.isEmpty() || !pageNotFoundSection.isEmpty() || !productCards.isEmpty(), getDefaultWaitTimeout());
-        return noMatchesHeader.stream().anyMatch(e -> e != null && e.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC))
-                || pageNotFoundSection.stream().anyMatch(e -> e != null && e.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC));
+        return noMatchesHeader.stream().anyMatch(e -> e.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC))
+                || pageNotFoundSection.stream().anyMatch(e -> e.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC));
     }
 
     public int getVisibleProductCardCount() {
@@ -90,7 +89,7 @@ public abstract class SearchResultsPageBase extends BasePage {
     public ProductPageBase openFirstVisibleProduct() {
         ExtendedWebElement first = findFirstVisibleProductTitle();
         first.click();
-        return PageFactory.initPage(getDriver(), ProductPageBase.class);
+        return initPage(getDriver(), ProductPageBase.class);
     }
 
     public String getFirstVisibleProductTitle() {
@@ -108,22 +107,9 @@ public abstract class SearchResultsPageBase extends BasePage {
     }
 
     private ExtendedWebElement findFirstVisibleProductTitle() {
-        long timeoutSec = getDefaultWaitTimeout().getSeconds();
-
-        waitUntil(d -> productTitles.stream().anyMatch(e -> isVisibleSafe(e, timeoutSec)), timeoutSec);
-
         return productTitles.stream()
-                .filter(e -> isVisibleSafe(e, timeoutSec))
+                .filter(e -> e != null && e.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC))
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException("No visible product titles found"));
-    }
-
-    private boolean isVisibleSafe(ExtendedWebElement element, long timeoutSec) {
-        if (element == null) return false;
-        try {
-            return element.isElementPresent(timeoutSec);
-        } catch (StaleElementReferenceException ignored) {
-            return false;
-        }
     }
 }

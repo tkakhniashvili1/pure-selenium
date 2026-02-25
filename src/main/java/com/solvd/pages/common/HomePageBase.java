@@ -6,8 +6,6 @@ import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.FindBy;
 
-import java.util.List;
-
 public abstract class HomePageBase extends BasePage {
 
     @FindBy(css = "#search_widget input[name='s']")
@@ -17,7 +15,7 @@ public abstract class HomePageBase extends BasePage {
     private ExtendedWebElement searchSubmitButton;
 
     @FindBy(css = "#content .product-title a")
-    private List<ExtendedWebElement> productTitleLinks;
+    private ExtendedWebElement firstProductTitleLink;
 
     public HomePageBase(WebDriver driver) {
         super(driver);
@@ -40,20 +38,14 @@ public abstract class HomePageBase extends BasePage {
             searchInput.getElement().sendKeys(Keys.ENTER);
         }
 
-        return PageFactory.initPage(getDriver(), SearchResultsPageBase.class);
+        return initPage(getDriver(), SearchResultsPageBase.class);
     }
 
     public String getSearchKeywordFromHome() {
-        ExtendedWebElement first = productTitleLinks.stream()
-                .filter(e -> e.isElementPresent(1))
-                .findFirst()
-                .orElseThrow(() -> new NoSuchElementException("No product titles"));
-
-        if (!first.isElementPresent(getDefaultWaitTimeout())) {
+        if (!firstProductTitleLink.isElementPresent(getDefaultWaitTimeout())) {
             throw new NoSuchElementException("No product titles");
         }
-
-        String title = first.getText().trim();
+        String title = firstProductTitleLink.getText().trim();
 
         String[] tokens = title.split("[^A-Za-z0-9]+");
         for (String t : tokens) {
@@ -65,16 +57,11 @@ public abstract class HomePageBase extends BasePage {
     public ProductPageBase openFirstProduct() {
         waitForPageOpened();
 
-        ExtendedWebElement first = productTitleLinks.stream()
-                .filter(e -> e.isElementPresent(getDefaultWaitTimeout()))
-                .findFirst()
-                .orElseThrow(() -> new NoSuchElementException("No displayed home product"));
-
-        if (!first.isElementPresent(getDefaultWaitTimeout())) {
+        if (!firstProductTitleLink.isElementPresent(getDefaultWaitTimeout())) {
             throw new NoSuchElementException("No displayed home product");
         }
 
-        first.click();
-        return PageFactory.initPage(getDriver(), ProductPageBase.class);
+        firstProductTitleLink.click();
+        return initPage(getDriver(), ProductPageBase.class);
     }
 }
