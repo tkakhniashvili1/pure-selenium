@@ -1,5 +1,6 @@
 package com.solvd.tests;
 
+import com.solvd.components.CartItemModalComponent;
 import com.solvd.pages.CartPage;
 import com.solvd.pages.HomePage;
 import com.solvd.pages.ProductPage;
@@ -105,13 +106,13 @@ public class ECommerceTests extends AbstractTest {
         int before = productPage.getCartCount();
 
         productPage.selectRequiredOptionsIfPresent();
-        productPage.addToCart();
+        CartItemModalComponent modal = productPage.addToCart();
 
-        softly.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
-        softly.assertTrue(productPage.getModalItemsCount() > 0, "Modal cart items count should be > 0.");
+        softly.assertTrue(modal.isOpened(), "Add-to-cart modal not displayed.");
+        softly.assertTrue(modal.getItemsCount() > 0, "Modal cart items count should be > 0.");
 
         softly.assertEquals(
-                normalizeText(productPage.getModalProductName()),
+                normalizeText(modal.getModalProductName()),
                 normalizeText(pdpTitle),
                 "Modal shows incorrect product name (should match PDP title)."
         );
@@ -128,11 +129,11 @@ public class ECommerceTests extends AbstractTest {
 
         ProductPage productPage = homePage.openFirstProduct();
         productPage.selectRequiredOptionsIfPresent();
-        productPage.addToCart();
+        CartItemModalComponent modal = productPage.addToCart();
 
-        softly.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
+        softly.assertTrue(modal.isOpened(), "Add-to-cart modal not displayed.");
 
-        CartPage cartPage = productPage.openCartFromModal();
+        CartPage cartPage = modal.proceedToCheckout();
         softly.assertTrue(cartPage.isDisplayed(), "Cart page not displayed (cart lines not visible).");
 
         BigDecimal subtotal1 = cartPage.getProductsSubtotal();
@@ -158,11 +159,11 @@ public class ECommerceTests extends AbstractTest {
         ProductPage productPage = homePage.openFirstProduct();
 
         productPage.selectRequiredOptionsIfPresent();
-        productPage.addToCart();
+        CartItemModalComponent modal = productPage.addToCart();
 
-        softly.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
+        softly.assertTrue(modal.isOpened(), "Add-to-cart modal not displayed.");
 
-        CartPage cartPage = productPage.openCartFromModal();
+        CartPage cartPage = modal.proceedToCheckout();
         softly.assertTrue(cartPage.isDisplayed(), "Cart page not displayed.");
 
         softly.assertTrue(cartPage.getCartLinesCount() > 0, "Cart should have at least 1 product line.");

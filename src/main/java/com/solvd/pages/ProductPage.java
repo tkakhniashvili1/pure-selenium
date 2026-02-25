@@ -1,5 +1,6 @@
 package com.solvd.pages;
 
+import com.solvd.components.CartItemModalComponent;
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
@@ -27,26 +28,17 @@ public class ProductPage extends BasePage {
     @FindBy(css = ".product-variants .color")
     private List<ExtendedWebElement> colorSwatches;
 
-    @FindBy(css = "#blockcart-modal .product-name")
-    private ExtendedWebElement modalProductName;
-
-    @FindBy(css = "#blockcart-modal a.btn.btn-primary")
-    private ExtendedWebElement proceedToCheckoutButton;
-
     @FindBy(css = "#_desktop_cart .cart-products-count")
     private List<ExtendedWebElement> desktopCartCount;
 
     @FindBy(css = "#_mobile_cart .cart-products-count")
     private List<ExtendedWebElement> mobileCartCount;
 
-    @FindBy(css = "#blockcart-modal .cart-content p.cart-products-count")
-    private ExtendedWebElement modalCartItemsLine;
-
     @FindBy(css = ".product-variants input[type='radio']")
     private List<ExtendedWebElement> variantRadios;
 
     @FindBy(css = "#blockcart-modal")
-    private ExtendedWebElement blockcartModal;
+    private ExtendedWebElement cartModalRoot;
 
     public ProductPage(WebDriver driver) {
         super(driver);
@@ -96,23 +88,16 @@ public class ProductPage extends BasePage {
         }
     }
 
-    public void addToCart() {
+    public CartItemModalComponent addToCart() {
+       // ensureFrontOfficeIframeOnce(productTitle);
         addToCartButton.click();
-    }
 
-    public int getModalItemsCount() {
-        modalCartItemsLine.isElementPresent();
-        return parseCount(modalCartItemsLine.getText());
-    }
+        cartModalRoot.isElementPresent(10);
 
-    public boolean isAddToCartModalDisplayed() {
-        blockcartModal.isElementPresent();
-        return blockcartModal.isDisplayed();
-    }
-
-    public String getModalProductName() {
-        modalProductName.isElementPresent();
-        return modalProductName.getText().trim();
+        return new CartItemModalComponent(
+                getDriver(),
+                getDriver().findElement(By.cssSelector("#blockcart-modal"))
+        ).waitUntilOpened(10);
     }
 
     public int getCartCount() {
@@ -133,15 +118,6 @@ public class ProductPage extends BasePage {
         }, getDefaultWaitTimeout());
 
         return getCartCount();
-    }
-
-    public CartPage openCartFromModal() {
-        proceedToCheckoutButton.click();
-
-        getDriver().switchTo().defaultContent();
-        CartPage cartPage = new CartPage(getDriver());
-
-        return cartPage;
     }
 
     private ExtendedWebElement getFirstAvailableCartCountElement() {
