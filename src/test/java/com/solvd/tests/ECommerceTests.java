@@ -160,8 +160,8 @@ public class ECommerceTests extends AbstractTest {
         softly.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
 
         CartPageBase cartPage = productPage.openCartFromModal();
-        softly.assertTrue(cartPage.isPageOpened(), "Cart page not displayed.");
 
+        softly.assertTrue(cartPage.isPageOpened(), "Cart page not displayed.");
         softly.assertTrue(cartPage.getCartLinesCount() > 0, "Cart should have at least 1 product line.");
 
         cartPage.removeFirstLine();

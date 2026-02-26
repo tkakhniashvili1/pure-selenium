@@ -1,6 +1,6 @@
 package com.solvd.pages.common;
 
-import com.solvd.components.CartItem;
+import com.solvd.components.CartItemComponent;
 import com.solvd.utils.TimeConstants;
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
 import org.openqa.selenium.NoSuchElementException;
@@ -21,7 +21,7 @@ public abstract class CartPageBase extends BasePage {
     private ExtendedWebElement pageRoot;
 
     @FindBy(css = "#main .cart-items .cart-item")
-    private List<CartItem> cartItems;
+    private List<CartItemComponent> cartItems;
 
     @FindBy(css = "#cart-subtotal-products .value, .cart-summary-line.cart-subtotal .value, .cart-subtotal .value")
     private ExtendedWebElement subtotal;
@@ -38,23 +38,18 @@ public abstract class CartPageBase extends BasePage {
     public CartPageBase(WebDriver driver) {
         super(driver);
         setUiLoadedMarker(pageRoot);
-        waitForPageOpened();
     }
 
-    public void waitForPageOpened() {
+    @Override
+    public boolean isPageOpened() {
         ensureFrontOfficeIframeOnce(pageRoot);
-        pageRoot.isElementPresent(getDefaultWaitTimeout());
-
-        waitUntil(d ->
-                        cartItems.stream().anyMatch(ExtendedWebElement::isVisible)
-                                || emptyCartMessage.isVisible(),
-                getDefaultWaitTimeout());
+        return pageRoot.isElementPresent(getDefaultWaitTimeout());
     }
 
     public int getQuantity() {
         if (isEmptyCartMessageDisplayed()) return 0;
 
-        CartItem item = firstCartItem();
+        CartItemComponent item = firstCartItem();
         if (item == null) {
             throw new IllegalStateException("Cart item not found, but cart is not empty");
         }
@@ -70,7 +65,7 @@ public abstract class CartPageBase extends BasePage {
     }
 
     public void increaseQuantityTo(int targetQuantity) {
-        CartItem item = firstCartItem();
+        CartItemComponent item = firstCartItem();
         if (item == null) {
             throw new NoSuchElementException("Cart item not found");
         }
@@ -86,11 +81,11 @@ public abstract class CartPageBase extends BasePage {
             item.increase();
 
             waitUntil(d -> {
-                CartItem refreshed = firstCartItem();
+                CartItemComponent refreshed = firstCartItem();
                 return refreshed != null && refreshed.quantity() > before;
             }, getDefaultWaitTimeout());
 
-            CartItem refreshed = firstCartItem();
+            CartItemComponent refreshed = firstCartItem();
             if (refreshed == null) {
                 throw new NoSuchElementException("Cart item not found");
             }
@@ -106,7 +101,7 @@ public abstract class CartPageBase extends BasePage {
 
     public int getCartLinesCount() {
         if (isEmptyCartMessageDisplayed()) return 0;
-        return cartItems.size();
+        return (int) cartItems.stream().filter(CartItemComponent::isDisplayed).count();
     }
 
     public void removeFirstLine() {
@@ -147,12 +142,10 @@ public abstract class CartPageBase extends BasePage {
         return !text.isEmpty() && text.chars().anyMatch(Character::isDigit);
     }
 
-    private CartItem firstCartItem() {
-        if (cartItems.isEmpty()) return null;
-
-        ExtendedWebElement root = cartItems.get(0);
-        if (!root.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC)) return null;
-
-        return new CartItem(getDriver(), root.getElement());
+    private CartItemComponent firstCartItem() {
+        return  cartItems.stream()
+                .filter(e -> e.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC))
+                .findFirst()
+                .orElse(null);
     }
 }
