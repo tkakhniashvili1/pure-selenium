@@ -7,7 +7,7 @@ import org.openqa.selenium.SearchContext;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.FindBy;
 
-public class CartItem extends AbstractUIObject {
+public class CartItemComponent extends AbstractUIObject {
 
     private static final String ATTR_VALUE = "value";
 
@@ -23,7 +23,7 @@ public class CartItem extends AbstractUIObject {
     @FindBy(css = "a.remove-from-cart")
     private ExtendedWebElement removeButton;
 
-    public CartItem(WebDriver driver, SearchContext searchContext) {
+    public CartItemComponent(WebDriver driver, SearchContext searchContext) {
         super(driver, searchContext);
     }
 
