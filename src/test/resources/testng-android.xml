@@ -4,7 +4,8 @@
   <test name="Android">
     <parameter name="custom_capabilities" value="android_web.properties"/>
     <classes>
-      <class name="com.solvd.tests.ECommerceTests"/>
+      <class name="com.solvd.tests.ECommerceTests">
+      </class>
     </classes>
   </test>
 </suite>

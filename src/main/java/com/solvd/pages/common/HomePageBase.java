@@ -55,13 +55,12 @@ public abstract class HomePageBase extends BasePage {
     }
 
     public ProductPageBase openFirstProduct() {
-        waitForPageOpened();
-
-        if (!firstProductTitleLink.isElementPresent(getDefaultWaitTimeout())) {
-            throw new NoSuchElementException("No displayed home product");
-        }
-
-        firstProductTitleLink.click();
-        return initPage(getDriver(), ProductPageBase.class);
+        String query = getSearchKeywordFromHome();
+        SearchResultsPageBase resultsPage = search(query);
+        return resultsPage.openFirstVisibleProduct();
     }
+
+    public abstract void handleNativePopup();
+
+    public abstract void switchBackToWeb();
 }
