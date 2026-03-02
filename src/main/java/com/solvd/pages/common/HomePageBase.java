@@ -1,10 +1,14 @@
 package com.solvd.pages.common;
 
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
+import io.appium.java_client.android.AndroidDriver;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WrapsDriver;
 import org.openqa.selenium.support.FindBy;
+
+import java.util.Set;
 
 public abstract class HomePageBase extends BasePage {
 
@@ -63,5 +67,41 @@ public abstract class HomePageBase extends BasePage {
 
         firstProductTitleLink.click();
         return initPage(getDriver(), ProductPageBase.class);
+    }
+
+    public Set<String> getAvailableContexts() {
+        AndroidDriver driver = (AndroidDriver) unwrap(getDriver());
+        return driver.getContextHandles();
+    }
+
+    public String getCurrentContext() {
+        AndroidDriver driver = (AndroidDriver) unwrap(getDriver());
+        return driver.getContext();
+    }
+
+    public void handleNativePopup() {
+        AndroidDriver driver = (AndroidDriver) unwrap(getDriver());
+        driver.context("NATIVE_APP");
+        driver.navigate().back();
+    }
+
+    public void switchBackToWeb() {
+        AndroidDriver driver = (AndroidDriver) unwrap(getDriver());
+        for (String context : driver.getContextHandles()) {
+            String uppercaseContext = context.toUpperCase();
+            if (uppercaseContext.contains("CHROMIUM") || uppercaseContext.contains("WEBVIEW")) {
+                driver.context(context);
+                return;
+            }
+        }
+        throw new RuntimeException("No WEBVIEW/CHROMIUM context found: " + driver.getContextHandles());
+    }
+
+    private WebDriver unwrap(WebDriver driver) {
+        WebDriver unwrappedDriver = driver;
+        while (unwrappedDriver instanceof WrapsDriver) {
+            unwrappedDriver = ((WrapsDriver) unwrappedDriver).getWrappedDriver();
+        }
+        return unwrappedDriver;
     }
 }

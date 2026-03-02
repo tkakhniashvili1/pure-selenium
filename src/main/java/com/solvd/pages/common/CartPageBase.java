@@ -143,7 +143,7 @@ public abstract class CartPageBase extends BasePage {
     }
 
     private CartItemComponent firstCartItem() {
-        return  cartItems.stream()
+        return cartItems.stream()
                 .filter(e -> e.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC))
                 .findFirst()
                 .orElse(null);
