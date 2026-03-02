@@ -19,12 +19,8 @@ public abstract class HomePageBase extends BasePage {
 
     public HomePageBase(WebDriver driver) {
         super(driver);
-        waitForPageOpened();
-    }
-
-    public void waitForPageOpened() {
         ensureFrontOfficeIframeOnce(searchInput);
-        searchInput.isElementPresent(getDefaultWaitTimeout());
+        setUiLoadedMarker(searchInput);
     }
 
     public SearchResultsPageBase search(String query) {
@@ -41,7 +37,7 @@ public abstract class HomePageBase extends BasePage {
         return initPage(getDriver(), SearchResultsPageBase.class);
     }
 
-    public String getSearchKeywordFromHome() {
+    public String getFirstProductSearchKeyword() {
         if (!firstProductTitleLink.isElementPresent(getDefaultWaitTimeout())) {
             throw new NoSuchElementException("No product titles");
         }
@@ -55,8 +51,6 @@ public abstract class HomePageBase extends BasePage {
     }
 
     public ProductPageBase openFirstProduct() {
-        waitForPageOpened();
-
         if (!firstProductTitleLink.isElementPresent(getDefaultWaitTimeout())) {
             throw new NoSuchElementException("No displayed home product");
         }

@@ -33,11 +33,11 @@ public class ECommerceTests extends AbstractTest {
     @Test
     public void verifySuccessfulProductSearch() {
         HomePageBase homePage = initPage(getDriver(), HomePageBase.class);
-        String query = homePage.getSearchKeywordFromHome();
+        String query = homePage.getFirstProductSearchKeyword();
 
         SearchResultsPageBase resultsPage = homePage.search(query);
 
-        softly.assertTrue(resultsPage.isDisplayed(), "Results page not displayed.");
+        softly.assertTrue(resultsPage.isPageOpened(), "Results page not displayed.");
 
         int count = resultsPage.getVisibleProductCardCount();
 
@@ -55,7 +55,7 @@ public class ECommerceTests extends AbstractTest {
         String query = "wkjnefjnfinerifgnrenfgjnrbvbvbvbvbvbvbbvbvbvbvbbvbvbv";
         SearchResultsPageBase resultsPage = homePage.search(query);
 
-        softly.assertTrue(resultsPage.isDisplayed(), "Results page not displayed.");
+        softly.assertTrue(resultsPage.isPageOpened(), "Results page not displayed.");
         softly.assertTrue(resultsPage.isNoMatchesMessageDisplayed(), "No matches message should be displayed.");
         softly.assertEquals(resultsPage.getVisibleProductCardCount(), 0,
                 "Displayed product cards should be 0 for a no-results search.");
@@ -66,10 +66,10 @@ public class ECommerceTests extends AbstractTest {
     @Test
     public void verifyProductDetailsPageOpensFromSearchResults() {
         HomePageBase homePage = initPage(getDriver(), HomePageBase.class);
-        String query = homePage.getSearchKeywordFromHome();
+        String query = homePage.getFirstProductSearchKeyword();
 
         SearchResultsPageBase resultsPage = homePage.search(query);
-        softly.assertTrue(resultsPage.isDisplayed(), "Results page not displayed.");
+        softly.assertTrue(resultsPage.isPageOpened(), "Results page not displayed.");
         softly.assertTrue(resultsPage.getVisibleProductCardCount() > 0,
                 "Search should return at least 1 product.");
 
