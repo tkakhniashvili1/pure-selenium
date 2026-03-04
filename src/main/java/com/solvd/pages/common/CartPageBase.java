@@ -42,7 +42,7 @@ public abstract class CartPageBase extends BasePage {
     @Override
     public boolean isPageOpened() {
         ensureFrontOfficeIframeOnce(pageRoot);
-        return pageRoot.isElementPresent(getDefaultWaitTimeout());
+        return pageRoot.isElementPresent();
     }
 
     public int getQuantity() {
