@@ -38,7 +38,7 @@ public abstract class HomePageBase extends BasePage {
     }
 
     public String getFirstProductSearchKeyword() {
-        if (!firstProductTitleLink.isElementPresent(getDefaultWaitTimeout())) {
+        if (!firstProductTitleLink.isElementPresent()) {
             throw new NoSuchElementException("No product titles");
         }
         String title = firstProductTitleLink.getText().trim();
@@ -51,7 +51,7 @@ public abstract class HomePageBase extends BasePage {
     }
 
     public ProductPageBase openFirstProduct() {
-        if (!firstProductTitleLink.isElementPresent(getDefaultWaitTimeout())) {
+        if (!firstProductTitleLink.isElementPresent()) {
             throw new NoSuchElementException("No displayed home product");
         }
 

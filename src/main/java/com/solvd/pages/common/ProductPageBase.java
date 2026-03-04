@@ -54,7 +54,7 @@ public abstract class ProductPageBase extends BasePage {
     }
 
     public boolean isAddToCartButtonPresent() {
-        return addToCartButton.isElementPresent(getDefaultWaitTimeout()) && addToCartButton.isEnabled();
+        return addToCartButton.isElementPresent() && addToCartButton.isEnabled();
     }
 
     public void selectRequiredOptionsIfPresent() {
@@ -104,11 +104,11 @@ public abstract class ProductPageBase extends BasePage {
 
     private void selectFirstAvailableOptions(List<ExtendedWebElement> selects, String tagName) {
         for (ExtendedWebElement select : selects) {
-            if (!select.isElementPresent(getDefaultWaitTimeout())) continue;
+            if (!select.isElementPresent()) continue;
 
             List<ExtendedWebElement> options = select.findExtendedWebElements(By.tagName(tagName));
             for (ExtendedWebElement option : options) {
-                if (!option.isElementPresent(getDefaultWaitTimeout())) continue;
+                if (!option.isElementPresent()) continue;
 
                 String value = option.getAttribute("value");
                 if (value != null && !value.isBlank()) {
