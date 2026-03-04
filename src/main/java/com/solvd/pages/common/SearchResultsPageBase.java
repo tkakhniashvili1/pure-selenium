@@ -33,7 +33,6 @@ public abstract class SearchResultsPageBase extends BasePage {
     public SearchResultsPageBase(WebDriver driver) {
         super(driver);
         ensureFrontOfficeIframeOnce(content);
-        //  setUiLoadedMarker(productList);
     }
 
     @Override
