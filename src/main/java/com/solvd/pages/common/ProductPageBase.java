@@ -1,6 +1,5 @@
 package com.solvd.pages.common;
 
-import com.solvd.utils.TimeConstants;
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
@@ -34,12 +33,6 @@ public abstract class ProductPageBase extends BasePage {
     @FindBy(css = "#blockcart-modal a.btn.btn-primary")
     private ExtendedWebElement proceedToCheckoutButton;
 
-    @FindBy(css = "#_desktop_cart .cart-products-count")
-    private ExtendedWebElement desktopCartCount;
-
-    @FindBy(css = "#_mobile_cart .cart-products-count")
-    private ExtendedWebElement mobileCartCount;
-
     @FindBy(css = "#blockcart-modal .cart-content p.cart-products-count")
     private ExtendedWebElement modalCartItemsLine;
 
@@ -51,12 +44,8 @@ public abstract class ProductPageBase extends BasePage {
 
     public ProductPageBase(WebDriver driver) {
         super(driver);
-        waitForPageOpened();
-    }
-
-    public void waitForPageOpened() {
         ensureFrontOfficeIframeOnce(productTitle);
-        productTitle.isElementPresent();
+        setUiLoadedMarker(productTitle);
     }
 
     public String getTitle() {
@@ -69,7 +58,7 @@ public abstract class ProductPageBase extends BasePage {
 
     public void selectRequiredOptionsIfPresent() {
         selectFirstAvailableOptions(variantSelects, "option");
-        selectFirstAvailableRadios(variantRadios);
+        selectOneRadioPerGroup(variantRadios);
     }
 
     public void addProductToCart() {
@@ -92,25 +81,17 @@ public abstract class ProductPageBase extends BasePage {
     }
 
     public int getCartCount() {
-        ExtendedWebElement el = getFirstAvailableCartCountElement();
-        if (el == null) return 0;
+        ExtendedWebElement el = getCartCountElement();
+        if (el == null || !el.isElementPresent()) return 0;
         return parseCount(el.getText());
     }
 
     public int waitForCartCountToBeIncremented(int initialCount) {
         final int expectedCount = initialCount + 1;
-        final ExtendedWebElement[] holder = {getFirstAvailableCartCountElement()};
 
-        waitUntil(d -> {
-            try {
-                return holder[0] != null && parseCount(holder[0].getText()) >= expectedCount;
-            } catch (StaleElementReferenceException | NoSuchElementException e) {
-                holder[0] = getFirstAvailableCartCountElement();
-                return false;
-            }
-        }, getDefaultWaitTimeout());
+        waitUntil(d -> isCartCountIncremented(expectedCount), getDefaultWaitTimeout());
 
-        return holder[0] == null ? 0 : parseCount(holder[0].getText());
+        return getCartCount();
     }
 
     public CartPageBase openCartFromModal() {
@@ -118,11 +99,7 @@ public abstract class ProductPageBase extends BasePage {
         return initPage(getDriver(), CartPageBase.class);
     }
 
-    private ExtendedWebElement getFirstAvailableCartCountElement() {
-        if (desktopCartCount.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC)) return desktopCartCount;
-        if (mobileCartCount.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC)) return mobileCartCount;
-        return null;
-    }
+    protected abstract ExtendedWebElement getCartCountElement();
 
     private void selectFirstAvailableOptions(List<ExtendedWebElement> selects, String tagName) {
         for (ExtendedWebElement select : selects) {
@@ -141,11 +118,11 @@ public abstract class ProductPageBase extends BasePage {
         }
     }
 
-    private void selectFirstAvailableRadios(List<ExtendedWebElement> radios) {
+    private void selectOneRadioPerGroup(List<ExtendedWebElement> radios) {
         Set<String> pickedNames = new HashSet<>();
 
         for (ExtendedWebElement radio : radios) {
-            if (!radio.isElementPresent(getDefaultWaitTimeout())) continue;
+            if (!radio.isElementPresent()) continue;
 
             String name = radio.getAttribute("name");
             if (name == null || name.isBlank() || !pickedNames.add(name)) continue;
@@ -153,6 +130,15 @@ public abstract class ProductPageBase extends BasePage {
             if (!radio.isSelected()) {
                 radio.click();
             }
+        }
+    }
+
+    private boolean isCartCountIncremented(int expectedCount) {
+        try {
+            ExtendedWebElement el = getCartCountElement();
+            return el != null && parseCount(el.getText()) >= expectedCount;
+        } catch (StaleElementReferenceException | NoSuchElementException e) {
+            return false;
         }
     }
 }

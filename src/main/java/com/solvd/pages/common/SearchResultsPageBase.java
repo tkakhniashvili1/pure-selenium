@@ -29,22 +29,8 @@ public abstract class SearchResultsPageBase extends BasePage {
 
     public SearchResultsPageBase(WebDriver driver) {
         super(driver);
-        waitForPageOpened();
-    }
-
-    public void waitForPageOpened() {
         ensureFrontOfficeIframeOnce(productList);
-
-        waitUntil(d ->
-                        (productList != null && productList.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC)) ||
-                                (!productCards.isEmpty()) ||
-                                (!noMatchesHeader.isEmpty()) ||
-                                (!pageNotFoundSection.isEmpty()),
-                getDefaultWaitTimeout());
-    }
-
-    public boolean isDisplayed() {
-        return productList.isElementPresent(getDefaultWaitTimeout()) || isNoMatchesMessageDisplayed();
+        setUiLoadedMarker(productList);
     }
 
     public boolean hasAnyProductTitleContaining(String keyword) {
@@ -63,13 +49,6 @@ public abstract class SearchResultsPageBase extends BasePage {
 
     public int getVisibleProductCardCount() {
         final int shortTimeout = TimeConstants.SHORT_TIMEOUT_SEC;
-
-        waitUntil(d ->
-                        productCards.stream().anyMatch(e -> e.isElementPresent(shortTimeout))
-                                || noMatchesHeader.stream().anyMatch(e -> e.isElementPresent(shortTimeout))
-                                || pageNotFoundSection.stream().anyMatch(e -> e.isElementPresent(shortTimeout)),
-                getDefaultWaitTimeout()
-        );
 
         if (isNoMatchesMessageDisplayed()) return 0;
 
@@ -97,7 +76,6 @@ public abstract class SearchResultsPageBase extends BasePage {
     }
 
     public List<String> getVisibleProductTitles() {
-        waitUntil(d -> productTitles != null && !productTitles.isEmpty(), getDefaultWaitTimeout());
         return productTitles.stream()
                 .filter(e -> e != null && e.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC))
                 .map(ExtendedWebElement::getText)

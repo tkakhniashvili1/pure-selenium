@@ -35,21 +35,21 @@ public class CartItemComponent extends AbstractUIObject {
         return productTitle.getText().trim();
     }
 
-    public void increase() {
+    public void increaseQuantity() {
         if (!plusButton.isElementPresent() || !plusButton.isEnabled()) {
             throw new NoSuchElementException("Quantity increase button not found or disabled");
         }
         plusButton.click();
     }
 
-    public void remove() {
+    public void clickRemoveButton() {
         if (!removeButton.isElementPresent()) {
             throw new NoSuchElementException("Remove button not found");
         }
         removeButton.click();
     }
 
-    public int quantity() {
+    public int getQuantity() {
         String value = quantityInput.getAttribute(ATTR_VALUE);
         if (value == null || value.isBlank()) {
             throw new IllegalStateException("Quantity input value is empty");

@@ -11,7 +11,6 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static com.solvd.utils.ParseUtils.parseIntegerFromText;
-import static com.solvd.utils.ParseUtils.parseMoney;
 
 public abstract class CartPageBase extends BasePage {
 
@@ -49,28 +48,28 @@ public abstract class CartPageBase extends BasePage {
     public int getQuantity() {
         if (isEmptyCartMessageDisplayed()) return 0;
 
-        CartItemComponent item = firstCartItem();
+        CartItemComponent item = getFirstCartItem();
         if (item == null) {
             throw new IllegalStateException("Cart item not found, but cart is not empty");
         }
-        return item.quantity();
+        return item.getQuantity();
     }
 
     public BigDecimal getProductsSubtotal() {
-        return readMoneyFrom(subtotal);
+        return parseMoney(subtotal);
     }
 
     public BigDecimal getTotal() {
-        return readMoneyFrom(total);
+        return parseMoney(total);
     }
 
     public void increaseQuantityTo(int targetQuantity) {
-        CartItemComponent item = firstCartItem();
+        CartItemComponent item = getFirstCartItem();
         if (item == null) {
             throw new NoSuchElementException("Cart item not found");
         }
 
-        int currentQuantity = item.quantity();
+        int currentQuantity = item.getQuantity();
 
         int attempts = 0;
         int maxAttempts = Math.max(10, targetQuantity - currentQuantity + 3);
@@ -78,18 +77,18 @@ public abstract class CartPageBase extends BasePage {
         while (currentQuantity < targetQuantity && attempts < maxAttempts) {
             int before = currentQuantity;
 
-            item.increase();
+            item.increaseQuantity();
 
             waitUntil(d -> {
-                CartItemComponent refreshed = firstCartItem();
-                return refreshed != null && refreshed.quantity() > before;
+                CartItemComponent refreshed = getFirstCartItem();
+                return refreshed != null && refreshed.getQuantity() > before;
             }, getDefaultWaitTimeout());
 
-            CartItemComponent refreshed = firstCartItem();
+            CartItemComponent refreshed = getFirstCartItem();
             if (refreshed == null) {
                 throw new NoSuchElementException("Cart item not found");
             }
-            currentQuantity = refreshed.quantity();
+            currentQuantity = refreshed.getQuantity();
 
             attempts++;
         }
@@ -113,7 +112,7 @@ public abstract class CartPageBase extends BasePage {
 
         int before = cartItems.size();
 
-        cartItems.get(0).remove();
+        cartItems.get(0).clickRemoveButton();
 
         waitUntil(d -> isEmptyCartMessageDisplayed() || cartItems.size() < before,
                 getDefaultWaitTimeout());
@@ -128,11 +127,6 @@ public abstract class CartPageBase extends BasePage {
         return parseIntegerFromText(cartCount.getText());
     }
 
-    private BigDecimal readMoneyFrom(ExtendedWebElement element) {
-        waitUntil(d -> isMoneyValuePresent(element), getDefaultWaitTimeout());
-        return parseMoney(element.getAttribute(ATTRIBUTE_TEXT_CONTENT));
-    }
-
     private boolean isMoneyValuePresent(ExtendedWebElement element) {
         if (!element.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC)) return false;
         String text = element.getAttribute(ATTRIBUTE_TEXT_CONTENT);
@@ -142,10 +136,17 @@ public abstract class CartPageBase extends BasePage {
         return !text.isEmpty() && text.chars().anyMatch(Character::isDigit);
     }
 
-    private CartItemComponent firstCartItem() {
+    private CartItemComponent getFirstCartItem() {
         return cartItems.stream()
                 .filter(e -> e.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC))
                 .findFirst()
                 .orElse(null);
+    }
+
+    private BigDecimal parseMoney(ExtendedWebElement element) {
+        waitUntil(d -> isMoneyValuePresent(element), getDefaultWaitTimeout());
+        return com.solvd.utils.ParseUtils.parseMoney(
+                element.getAttribute(ATTRIBUTE_TEXT_CONTENT)
+        );
     }
 }

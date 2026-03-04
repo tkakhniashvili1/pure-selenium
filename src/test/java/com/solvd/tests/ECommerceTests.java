@@ -41,7 +41,7 @@ public class ECommerceTests extends AbstractTest {
 
         SearchResultsPageBase resultsPage = homePage.search(query);
 
-        softly.assertTrue(resultsPage.isDisplayed(), "Results page not displayed.");
+        softly.assertTrue(resultsPage.isPageOpened(), "Results page not displayed.");
 
         int count = resultsPage.getVisibleProductCardCount();
 
@@ -59,7 +59,7 @@ public class ECommerceTests extends AbstractTest {
         String query = "wkjnefjnfinerifgnrenfgjnrbvbvbvbvbvbvbbvbvbvbvbbvbvbv";
         SearchResultsPageBase resultsPage = homePage.search(query);
 
-        softly.assertTrue(resultsPage.isDisplayed(), "Results page not displayed.");
+        softly.assertTrue(resultsPage.isPageOpened(), "Results page not displayed.");
         softly.assertTrue(resultsPage.isNoMatchesMessageDisplayed(), "No matches message should be displayed.");
         softly.assertEquals(resultsPage.getVisibleProductCardCount(), 0,
                 "Displayed product cards should be 0 for a no-results search.");
@@ -73,7 +73,7 @@ public class ECommerceTests extends AbstractTest {
         String query = homePage.getSearchKeywordFromHome();
 
         SearchResultsPageBase resultsPage = homePage.search(query);
-        softly.assertTrue(resultsPage.isDisplayed(), "Results page not displayed.");
+        softly.assertTrue(resultsPage.isPageOpened(), "Results page not displayed.");
         softly.assertTrue(resultsPage.getVisibleProductCardCount() > 0,
                 "Search should return at least 1 product.");
 
@@ -185,6 +185,8 @@ public class ECommerceTests extends AbstractTest {
         Set<String> contexts = homePage.getAvailableContexts();
         softly.assertTrue(contexts.contains("NATIVE_APP"), "NATIVE_APP context should exist.");
         softly.assertTrue(contexts.size() > 1, "Web context should exist in addition to native context.");
+
+        homePage.triggerNativeRequiredActionInWeb();
 
         homePage.handleNativePopup();
         softly.assertEquals(homePage.getCurrentContext(), "NATIVE_APP", "Context should be NATIVE_APP after switching.");
