@@ -1,4 +1,4 @@
-package com.solvd.pages;
+package com.solvd.pages.common;
 
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
 import org.openqa.selenium.Keys;
@@ -6,9 +6,7 @@ import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.FindBy;
 
-import java.util.List;
-
-public class HomePage extends BasePage {
+public abstract class HomePageBase extends BasePage {
 
     @FindBy(css = "#search_widget input[name='s']")
     private ExtendedWebElement searchInput;
@@ -17,19 +15,15 @@ public class HomePage extends BasePage {
     private ExtendedWebElement searchSubmitButton;
 
     @FindBy(css = "#content .product-title a")
-    private List<ExtendedWebElement> productTitleLinks;
+    private ExtendedWebElement firstProductTitleLink;
 
-    public HomePage(WebDriver driver) {
+    public HomePageBase(WebDriver driver) {
         super(driver);
-        waitForPageOpened();
-    }
-
-    public void waitForPageOpened() {
         ensureFrontOfficeIframeOnce(searchInput);
-        searchInput.isElementPresent(getDefaultWaitTimeout());
+        setUiLoadedMarker(searchInput);
     }
 
-    public SearchResultsPage search(String query) {
+    public SearchResultsPageBase search(String query) {
         searchInput.click();
         searchInput.getElement().clear();
         searchInput.type(query);
@@ -40,20 +34,14 @@ public class HomePage extends BasePage {
             searchInput.getElement().sendKeys(Keys.ENTER);
         }
 
-        return new SearchResultsPage(getDriver());
+        return initPage(getDriver(), SearchResultsPageBase.class);
     }
 
-    public String getSearchKeywordFromHome() {
-        ExtendedWebElement first = productTitleLinks.stream()
-                .filter(e -> e.isElementPresent(1))
-                .findFirst()
-                .orElseThrow(() -> new NoSuchElementException("No product titles"));
-
-        if (!first.isElementPresent(getDefaultWaitTimeout())) {
+    public String getFirstProductSearchKeyword() {
+        if (!firstProductTitleLink.isElementPresent()) {
             throw new NoSuchElementException("No product titles");
         }
-
-        String title = first.getText().trim();
+        String title = firstProductTitleLink.getText().trim();
 
         String[] tokens = title.split("[^A-Za-z0-9]+");
         for (String t : tokens) {
@@ -62,17 +50,12 @@ public class HomePage extends BasePage {
         return title.substring(0, Math.min(6, title.length())).toLowerCase();
     }
 
-    public ProductPage openFirstProduct() {
-        ExtendedWebElement first = productTitleLinks.stream()
-                .filter(e -> e.isElementPresent(3))
-                .findFirst()
-                .orElseThrow(() -> new NoSuchElementException("No displayed home product"));
-
-        if (!first.isElementPresent(getDefaultWaitTimeout())) {
+    public ProductPageBase openFirstProduct() {
+        if (!firstProductTitleLink.isElementPresent()) {
             throw new NoSuchElementException("No displayed home product");
         }
 
-        first.click();
-        return new ProductPage(getDriver());
+        firstProductTitleLink.click();
+        return initPage(getDriver(), ProductPageBase.class);
     }
 }

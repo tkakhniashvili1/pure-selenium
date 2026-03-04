@@ -1,9 +1,6 @@
 package com.solvd.tests;
 
-import com.solvd.pages.CartPage;
-import com.solvd.pages.HomePage;
-import com.solvd.pages.ProductPage;
-import com.solvd.pages.SearchResultsPage;
+import com.solvd.pages.common.*;
 import com.zebrunner.carina.core.AbstractTest;
 import com.zebrunner.carina.utils.R;
 import org.testng.annotations.BeforeMethod;
@@ -35,12 +32,12 @@ public class ECommerceTests extends AbstractTest {
 
     @Test
     public void verifySuccessfulProductSearch() {
-        HomePage homePage = new HomePage(getDriver());
-        String query = homePage.getSearchKeywordFromHome();
+        HomePageBase homePage = initPage(getDriver(), HomePageBase.class);
+        String query = homePage.getFirstProductSearchKeyword();
 
-        SearchResultsPage resultsPage = homePage.search(query);
+        SearchResultsPageBase resultsPage = homePage.search(query);
 
-        softly.assertTrue(resultsPage.isDisplayed(), "Results page not displayed.");
+        softly.assertTrue(resultsPage.isPageOpened(), "Results page not displayed.");
 
         int count = resultsPage.getVisibleProductCardCount();
 
@@ -53,12 +50,12 @@ public class ECommerceTests extends AbstractTest {
 
     @Test
     public void verifyProductSearchWithNoResults() {
-        HomePage homePage = new HomePage(getDriver());
+        HomePageBase homePage = initPage(getDriver(), HomePageBase.class);
 
         String query = "wkjnefjnfinerifgnrenfgjnrbvbvbvbvbvbvbbvbvbvbvbbvbvbv";
-        SearchResultsPage resultsPage = homePage.search(query);
+        SearchResultsPageBase resultsPage = homePage.search(query);
 
-        softly.assertTrue(resultsPage.isDisplayed(), "Results page not displayed.");
+        softly.assertTrue(resultsPage.isPageOpened(), "Results page not displayed.");
         softly.assertTrue(resultsPage.isNoMatchesMessageDisplayed(), "No matches message should be displayed.");
         softly.assertEquals(resultsPage.getVisibleProductCardCount(), 0,
                 "Displayed product cards should be 0 for a no-results search.");
@@ -68,20 +65,20 @@ public class ECommerceTests extends AbstractTest {
 
     @Test
     public void verifyProductDetailsPageOpensFromSearchResults() {
-        HomePage homePage = new HomePage(getDriver());
-        String query = homePage.getSearchKeywordFromHome();
+        HomePageBase homePage = initPage(getDriver(), HomePageBase.class);
+        String query = homePage.getFirstProductSearchKeyword();
 
-        SearchResultsPage resultsPage = homePage.search(query);
-        softly.assertTrue(resultsPage.isDisplayed(), "Results page not displayed.");
+        SearchResultsPageBase resultsPage = homePage.search(query);
+        softly.assertTrue(resultsPage.isPageOpened(), "Results page not displayed.");
         softly.assertTrue(resultsPage.getVisibleProductCardCount() > 0,
                 "Search should return at least 1 product.");
 
         String clickedTitle = resultsPage.getFirstVisibleProductTitle();
         softly.assertFalse(normalizeText(clickedTitle).isEmpty(), "Clicked product title is empty.");
 
-        ProductPage productPage = resultsPage.openFirstVisibleProduct();
+        ProductPageBase productPage = resultsPage.openFirstVisibleProduct();
 
-        softly.assertTrue(productPage.isAddToCartVisibleAndEnabled(),
+        softly.assertTrue(productPage.isAddToCartButtonPresent(),
                 "Add to cart button is not visible/enabled.");
 
         String pdpTitle = productPage.getTitle();
@@ -98,14 +95,14 @@ public class ECommerceTests extends AbstractTest {
 
     @Test
     public void verifyAddToCartFromProductDetailsPage() {
-        HomePage homePage = new HomePage(getDriver());
-        ProductPage productPage = homePage.openFirstProduct();
+        HomePageBase homePage = initPage(getDriver(), HomePageBase.class);
+        ProductPageBase productPage = homePage.openFirstProduct();
 
         String pdpTitle = productPage.getTitle();
         int before = productPage.getCartCount();
 
         productPage.selectRequiredOptionsIfPresent();
-        productPage.addToCart();
+        productPage.addProductToCart();
 
         softly.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
         softly.assertTrue(productPage.getModalItemsCount() > 0, "Modal cart items count should be > 0.");
@@ -116,7 +113,7 @@ public class ECommerceTests extends AbstractTest {
                 "Modal shows incorrect product name (should match PDP title)."
         );
 
-        int after = productPage.waitForCartCountToIncrease(before);
+        int after = productPage.waitForCartCountToBeIncremented(before);
         softly.assertTrue(after > before, "Cart count should increase after add to cart.");
 
         softly.assertAll();
@@ -124,16 +121,16 @@ public class ECommerceTests extends AbstractTest {
 
     @Test
     public void verifyCartQuantityUpdateRecalculatesTotals() {
-        HomePage homePage = new HomePage(getDriver());
+        HomePageBase homePage = initPage(getDriver(), HomePageBase.class);
 
-        ProductPage productPage = homePage.openFirstProduct();
+        ProductPageBase productPage = homePage.openFirstProduct();
         productPage.selectRequiredOptionsIfPresent();
-        productPage.addToCart();
+        productPage.addProductToCart();
 
         softly.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
 
-        CartPage cartPage = productPage.openCartFromModal();
-        softly.assertTrue(cartPage.isDisplayed(), "Cart page not displayed (cart lines not visible).");
+        CartPageBase cartPage = productPage.openCartFromModal();
+        softly.assertTrue(cartPage.isPageOpened(), "Cart page not displayed (cart lines not visible).");
 
         BigDecimal subtotal1 = cartPage.getProductsSubtotal();
         BigDecimal total1 = cartPage.getTotal();
@@ -154,17 +151,17 @@ public class ECommerceTests extends AbstractTest {
 
     @Test
     public void verifyCartIsEmptyAfterRemovingLastProduct() {
-        HomePage homePage = new HomePage(getDriver());
-        ProductPage productPage = homePage.openFirstProduct();
+        HomePageBase homePage = initPage(getDriver(), HomePageBase.class);
+        ProductPageBase productPage = homePage.openFirstProduct();
 
         productPage.selectRequiredOptionsIfPresent();
-        productPage.addToCart();
+        productPage.addProductToCart();
 
         softly.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
 
-        CartPage cartPage = productPage.openCartFromModal();
-        softly.assertTrue(cartPage.isDisplayed(), "Cart page not displayed.");
+        CartPageBase cartPage = productPage.openCartFromModal();
 
+        softly.assertTrue(cartPage.isPageOpened(), "Cart page not displayed.");
         softly.assertTrue(cartPage.getCartLinesCount() > 0, "Cart should have at least 1 product line.");
 
         cartPage.removeFirstLine();

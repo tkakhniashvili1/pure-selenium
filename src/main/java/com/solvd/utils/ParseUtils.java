@@ -2,24 +2,26 @@ package com.solvd.utils;
 
 import java.math.BigDecimal;
 
-public final class ParseUtil {
+public final class ParseUtils {
 
-    private ParseUtil() {
+    private ParseUtils() {
     }
 
     public static int parseCount(String raw) {
-        if (raw == null || raw.isBlank()) {
-            return 0;
-        }
+        if (raw == null || raw.isBlank()) return 0;
 
         int value = 0;
-        for (char c : raw.toCharArray()) {
-            if (Character.isDigit(c)) {
+        boolean hasDigit = false;
+
+        for (int i = 0; i < raw.length(); i++) {
+            char c = raw.charAt(i);
+            if (c >= '0' && c <= '9') {
+                hasDigit = true;
                 value = value * 10 + (c - '0');
             }
         }
 
-        return value;
+        return hasDigit ? value : 0;
     }
 
     public static int parseIntegerFromText(String raw) {
