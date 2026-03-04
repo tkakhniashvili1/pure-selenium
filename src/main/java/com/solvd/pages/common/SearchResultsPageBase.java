@@ -12,6 +12,9 @@ import java.util.Locale;
 
 public abstract class SearchResultsPageBase extends BasePage {
 
+    @FindBy(id = "content")
+    private ExtendedWebElement content;
+
     @FindBy(css = "#js-product-list")
     private ExtendedWebElement productList;
 
@@ -29,8 +32,18 @@ public abstract class SearchResultsPageBase extends BasePage {
 
     public SearchResultsPageBase(WebDriver driver) {
         super(driver);
-        ensureFrontOfficeIframeOnce(productList);
-        setUiLoadedMarker(productList);
+        ensureFrontOfficeIframeOnce(content);
+        //  setUiLoadedMarker(productList);
+    }
+
+    @Override
+    public boolean isPageOpened() {
+        ensureFrontOfficeIframeOnce(content);
+        int timeoutSec = TimeConstants.SHORT_TIMEOUT_SEC;
+
+        return (productList != null && productList.isElementPresent(timeoutSec))
+                || noMatchesHeader.stream().anyMatch(e -> e.isElementPresent(timeoutSec))
+                || pageNotFoundSection.stream().anyMatch(e -> e.isElementPresent(timeoutSec));
     }
 
     public boolean hasAnyProductTitleContaining(String keyword) {

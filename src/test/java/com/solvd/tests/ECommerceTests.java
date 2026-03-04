@@ -1,6 +1,9 @@
 package com.solvd.tests;
 
-import com.solvd.pages.common.*;
+import com.solvd.pages.common.CartPageBase;
+import com.solvd.pages.common.HomePageBase;
+import com.solvd.pages.common.ProductPageBase;
+import com.solvd.pages.common.SearchResultsPageBase;
 import com.zebrunner.carina.core.AbstractTest;
 import com.zebrunner.carina.utils.R;
 import org.testng.annotations.BeforeMethod;

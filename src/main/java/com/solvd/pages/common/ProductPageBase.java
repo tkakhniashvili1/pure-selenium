@@ -1,6 +1,5 @@
 package com.solvd.pages.common;
 
-import com.solvd.utils.TimeConstants;
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
