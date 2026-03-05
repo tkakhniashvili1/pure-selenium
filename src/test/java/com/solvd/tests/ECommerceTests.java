@@ -11,6 +11,7 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
+import com.solvd.pages.android.HomePage;
 
 import java.math.BigDecimal;
 import java.util.Set;
@@ -173,26 +174,6 @@ public class ECommerceTests extends AbstractTest {
         softly.assertEquals(cartPage.getCartLinesCount(), 0, "Product line should be removed from the cart.");
         softly.assertTrue(cartPage.isEmptyCartMessageDisplayed(), "Empty cart message should be displayed.");
         softly.assertEquals(cartPage.cartCountElement(), 0, "Cart quantity indicator should be 0.");
-
-        softly.assertAll();
-    }
-
-    @Test
-    public void verifyContextSwitchingInAndroidChrome() {
-        HomePageBase homePage = initPage(getDriver(), HomePageBase.class);
-        homePage.open();
-
-        Set<String> contexts = homePage.getAvailableContexts();
-        softly.assertTrue(contexts.contains("NATIVE_APP"), "NATIVE_APP context should exist.");
-        softly.assertTrue(contexts.size() > 1, "Web context should exist in addition to native context.");
-
-        homePage.triggerNativeRequiredActionInWeb();
-
-        homePage.handleNativePopup();
-        softly.assertEquals(homePage.getCurrentContext(), "NATIVE_APP", "Context should be NATIVE_APP after switching.");
-
-        homePage.switchBackToWeb();
-        softly.assertNotEquals(homePage.getCurrentContext(), "NATIVE_APP", "Context should switch back to web context.");
 
         softly.assertAll();
     }

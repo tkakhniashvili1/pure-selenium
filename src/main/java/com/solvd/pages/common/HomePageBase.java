@@ -48,45 +48,6 @@ public abstract class HomePageBase extends BasePage {
         return initPage(getDriver(), ProductPageBase.class);
     }
 
-    public Set<String> getAvailableContexts() {
-        AndroidDriver driver = (AndroidDriver) unwrap(getDriver());
-        return driver.getContextHandles();
-    }
-
-    public void handleNativePopup() {
-        AndroidDriver driver = (AndroidDriver) unwrap(getDriver());
-
-        driver.context("NATIVE_APP");
-        waitUntil(d -> "NATIVE_APP".equals(driver.getContext()), getDefaultWaitTimeout());
-
-        driver.navigate().back();
-    }
-
-    private WebDriver unwrap(WebDriver driver) {
-        WebDriver unwrappedDriver = driver;
-        while (unwrappedDriver instanceof WrapsDriver) {
-            unwrappedDriver = ((WrapsDriver) unwrappedDriver).getWrappedDriver();
-        }
-        return unwrappedDriver;
-    }
-
-    public void switchBackToWeb() {
-        AndroidDriver driver = (AndroidDriver) unwrap(getDriver());
-        for (String context : driver.getContextHandles()) {
-            String uppercaseContext = context.toUpperCase();
-            if (uppercaseContext.contains("CHROMIUM") || uppercaseContext.contains("WEBVIEW")) {
-                driver.context(context);
-                return;
-            }
-        }
-        throw new RuntimeException("No WEBVIEW/CHROMIUM context found: " + driver.getContextHandles());
-    }
-
-    public String getCurrentContext() {
-        AndroidDriver driver = (AndroidDriver) unwrap(getDriver());
-        return driver.getContext();
-    }
-
     public String getSearchKeywordFromHome() {
         if (!firstProductTitleLink.isElementPresent()) {
             throw new NoSuchElementException("No product titles");
