@@ -1,7 +1,11 @@
 package com.solvd.tests;
 
-import com.solvd.pages.android.HomePage;
+import com.solvd.pages.common.HomePageBase;
+import com.solvd.utils.MobileContextUtils;
 import com.zebrunner.carina.core.AbstractTest;
+import io.appium.java_client.remote.SupportsContextSwitching;
+import org.openqa.selenium.ContextAware;
+import org.openqa.selenium.NotFoundException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
@@ -18,22 +22,27 @@ public class AndroidContextTests extends AbstractTest {
     }
 
     @Test
-    public void verifyContextSwitchingInAndroidChrome() {
-        HomePage homePage = initPage(getDriver(), HomePage.class);
-        homePage.open();
+    public void verifyContextSwitching() {
+        HomePageBase homePageBase = initPage(getDriver(), HomePageBase.class);
+        MobileContextUtils context = new MobileContextUtils();
 
-        Set<String> contexts = homePage.getAvailableContexts();
-        softly.assertTrue(contexts.contains("NATIVE_APP"), "NATIVE_APP context should exist.");
-        softly.assertTrue(contexts.size() > 1, "Web context should exist in addition to native context.");
+        homePageBase.open();
+        homePageBase.triggerNativeRequiredActionInWeb();
 
-        homePage.triggerNativeRequiredActionInWeb();
+        context.switchMobileContext(MobileContextUtils.View.NATIVE);
+        getDriver().navigate().back();
 
-        homePage.handleNativePopup();
-        softly.assertEquals(homePage.getCurrentContext(), "NATIVE_APP", "Context should be NATIVE_APP after switching.");
+        Set<String> handles = ((ContextAware) getDriver()).getContextHandles();
+        String webContext = handles.stream()
+                .filter(h -> !"NATIVE_APP".equals(h))
+                .findFirst()
+                .orElseThrow(() -> new NotFoundException("No WEB context"));
 
-        homePage.switchBackToWeb();
-        softly.assertNotEquals(homePage.getCurrentContext(), "NATIVE_APP", "Context should switch back to web context.");
+        ((SupportsContextSwitching) getDriver()).context(webContext);
 
+        String currentContext = ((SupportsContextSwitching) getDriver()).getContext();
+        softly.assertNotEquals(currentContext, "NATIVE_APP", "Should be in WEB context.");
+        softly.assertTrue(getDriver().getCurrentUrl().contains("prestashop"), "Unexpected URL after switching back to WEB.");
         softly.assertAll();
     }
 }
