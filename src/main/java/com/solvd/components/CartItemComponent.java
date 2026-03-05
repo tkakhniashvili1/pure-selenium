@@ -36,28 +36,20 @@ public class CartItemComponent extends AbstractUIObject {
     }
 
     public void increaseQuantity() {
-        if (!plusButton.isElementPresent() || !plusButton.isEnabled()) {
-            throw new NoSuchElementException("Quantity increase button not found or disabled");
+        if (!plusButton.isClickable()) {
+            throw new NoSuchElementException("Quantity increase button not clickable");
         }
         plusButton.click();
     }
 
     public void clickRemoveButton() {
-        if (!removeButton.isElementPresent()) {
-            throw new NoSuchElementException("Remove button not found");
+        if (!removeButton.isClickable()) {
+            throw new NoSuchElementException("Remove button not clickable");
         }
         removeButton.click();
     }
 
     public int getQuantity() {
-        String value = quantityInput.getAttribute(ATTR_VALUE);
-        if (value == null || value.isBlank()) {
-            throw new IllegalStateException("Quantity input value is empty");
-        }
-        try {
-            return Integer.parseInt(value.trim());
-        } catch (NumberFormatException e) {
-            throw new IllegalStateException("Quantity is not a number: " + value, e);
-        }
+        return Integer.parseInt(quantityInput.getAttribute("value"));
     }
 }

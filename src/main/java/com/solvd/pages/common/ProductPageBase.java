@@ -1,5 +1,6 @@
 package com.solvd.pages.common;
 
+import com.solvd.utils.TimeConstants;
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
@@ -71,12 +72,14 @@ public abstract class ProductPageBase extends BasePage {
     }
 
     public boolean isAddToCartModalDisplayed() {
-        blockcartModal.isElementPresent();
-        return blockcartModal.isDisplayed();
+        return blockcartModal.isElementPresent();
     }
 
     public String getModalProductName() {
-        modalProductName.isElementPresent();
+        modalProductName.waitUntil(driver ->
+                modalProductName.isElementPresent(),
+                TimeConstants.SHORT_TIMEOUT_SEC);
+
         return modalProductName.getText().trim();
     }
 

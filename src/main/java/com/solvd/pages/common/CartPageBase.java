@@ -1,6 +1,7 @@
 package com.solvd.pages.common;
 
 import com.solvd.components.CartItemComponent;
+import com.solvd.utils.ParseUtils;
 import com.solvd.utils.TimeConstants;
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
 import org.openqa.selenium.NoSuchElementException;
@@ -145,7 +146,7 @@ public abstract class CartPageBase extends BasePage {
 
     private BigDecimal parseMoney(ExtendedWebElement element) {
         waitUntil(d -> isMoneyValuePresent(element), getDefaultWaitTimeout());
-        return com.solvd.utils.ParseUtils.parseMoney(
+        return ParseUtils.parseMoney(
                 element.getAttribute(ATTRIBUTE_TEXT_CONTENT)
         );
     }

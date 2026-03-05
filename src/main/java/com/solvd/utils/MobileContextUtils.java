@@ -17,7 +17,7 @@ public class MobileContextUtils implements IDriverPool {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-    public WebDriver getPureDriver(WebDriver driver) {
+    private WebDriver getPureDriver(WebDriver driver) {
         if (driver instanceof Decorated<?>) {
             driver = (WebDriver) ((Decorated<?>) driver).getOriginal();
         }
@@ -29,7 +29,7 @@ public class MobileContextUtils implements IDriverPool {
     }
 
     public void switchMobileContext(View context, View exclude) {
-        WebDriver driver = getDriver();
+        WebDriver driver = getPureDriver(getDriver());
         DriverHelper help = new DriverHelper();
         Set<String> contextHandles = help.performIgnoreException(((ContextAware) driver)::getContextHandles);
         String desiredContext = "";
@@ -56,7 +56,7 @@ public class MobileContextUtils implements IDriverPool {
         NATIVE("NATIVE_APP"),
         WEB_CARINA("WEBVIEW_com.solvd.carinademoapplication"),
 
-        WEB_BROWSER("WEBVIEW_");
+        WEB_BROWSER("CHROMIUM");
 
         String viewName;
 
