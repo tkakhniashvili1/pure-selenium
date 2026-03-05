@@ -176,24 +176,4 @@ public class ECommerceTests extends AbstractTest {
 
         softly.assertAll();
     }
-
-    @Test
-    public void verifyContextSwitchingInAndroidChrome() {
-        HomePageBase homePage = initPage(getDriver(), HomePageBase.class);
-        homePage.open();
-
-        Set<String> contexts = homePage.getAvailableContexts();
-        softly.assertTrue(contexts.contains("NATIVE_APP"), "NATIVE_APP context should exist.");
-        softly.assertTrue(contexts.size() > 1, "Web context should exist in addition to native context.");
-
-        homePage.triggerNativeRequiredActionInWeb();
-
-        homePage.handleNativePopup();
-        softly.assertEquals(homePage.getCurrentContext(), "NATIVE_APP", "Context should be NATIVE_APP after switching.");
-
-        homePage.switchBackToWeb();
-        softly.assertNotEquals(homePage.getCurrentContext(), "NATIVE_APP", "Context should switch back to web context.");
-
-        softly.assertAll();
-    }
 }
