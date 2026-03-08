@@ -4,7 +4,6 @@ import com.zebrunner.carina.utils.config.Configuration;
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
-import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.FindBy;
 
@@ -40,24 +39,18 @@ public abstract class HomePageBase extends BasePage {
     }
 
     public ProductPageBase openFirstProduct() {
-        if (!firstProductTitleLink.isElementPresent()) {
-            throw new NoSuchElementException("No displayed home product");
-        }
-
         firstProductTitleLink.click();
         return initPage(getDriver(), ProductPageBase.class);
     }
 
     public String getSearchKeywordFromHome() {
-        if (!firstProductTitleLink.isElementPresent()) {
-            throw new NoSuchElementException("No product titles");
-        }
         String title = firstProductTitleLink.getText().trim();
 
         String[] tokens = title.split("[^A-Za-z0-9]+");
         for (String t : tokens) {
             if (t.length() >= 4) return t.toLowerCase();
         }
+
         return title.substring(0, Math.min(6, title.length())).toLowerCase();
     }
 

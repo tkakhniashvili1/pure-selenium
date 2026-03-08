@@ -113,7 +113,7 @@ public abstract class CartPageBase extends BasePage {
 
         int before = cartItems.size();
 
-        cartItems.get(0).clickRemoveButton();
+        cartItems.get(0).click();
 
         waitUntil(d -> isEmptyCartMessageDisplayed() || cartItems.size() < before,
                 getDefaultWaitTimeout());

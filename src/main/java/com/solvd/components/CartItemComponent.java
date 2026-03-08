@@ -31,22 +31,11 @@ public class CartItemComponent extends AbstractUIObject {
         return removeButton.isElementPresent();
     }
 
-    public String title() {
-        return productTitle.getText().trim();
-    }
-
     public void increaseQuantity() {
         if (!plusButton.isClickable()) {
             throw new NoSuchElementException("Quantity increase button not clickable");
         }
         plusButton.click();
-    }
-
-    public void clickRemoveButton() {
-        if (!removeButton.isClickable()) {
-            throw new NoSuchElementException("Remove button not clickable");
-        }
-        removeButton.click();
     }
 
     public int getQuantity() {
