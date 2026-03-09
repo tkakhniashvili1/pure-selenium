@@ -23,9 +23,6 @@ public abstract class ProductPageBase extends BasePage {
     @FindBy(css = ".product-variants select")
     private List<ExtendedWebElement> variantSelects;
 
-    @FindBy(css = ".product-variants .color")
-    private List<ExtendedWebElement> colorSwatches;
-
     @FindBy(css = "#blockcart-modal .product-name")
     private ExtendedWebElement modalProductName;
 

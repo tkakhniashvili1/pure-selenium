@@ -14,7 +14,6 @@ import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
 
 import java.math.BigDecimal;
-import java.util.Set;
 
 import static com.solvd.utils.TextUtils.normalizeText;
 
