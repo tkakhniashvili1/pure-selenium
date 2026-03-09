@@ -32,9 +32,6 @@ public class CartItemComponent extends AbstractUIObject {
     }
 
     public void increaseQuantity() {
-        if (!plusButton.isClickable()) {
-            throw new NoSuchElementException("Quantity increase button not clickable");
-        }
         plusButton.click();
     }
 

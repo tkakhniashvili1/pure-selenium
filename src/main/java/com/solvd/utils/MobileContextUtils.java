@@ -32,22 +32,28 @@ public class MobileContextUtils implements IDriverPool {
         WebDriver driver = getPureDriver(getDriver());
         DriverHelper help = new DriverHelper();
         Set<String> contextHandles = help.performIgnoreException(((ContextAware) driver)::getContextHandles);
-        String desiredContext = "";
-        boolean isContextPresent = false;
+        String desiredContext = null;
         LOGGER.info("Existing contexts: ");
+
         for (String cont : contextHandles) {
-            if (cont.contains(context.getView())) {
-                if (exclude != null && cont.contains(exclude.getView())) {
-                    continue;
-                }
-                desiredContext = cont;
-                isContextPresent = true;
-            }
             LOGGER.info(cont);
+
+            if (!cont.contains(context.getView())) {
+                continue;
+            }
+
+            if (exclude != null && cont.contains(exclude.getView())) {
+                continue;
+            }
+
+            desiredContext = cont;
+            break;
         }
-        if (!isContextPresent) {
+
+        if (desiredContext == null) {
             throw new NotFoundException("Desired context is not present");
         }
+
         LOGGER.info("Switching to context : " + desiredContext);
         ((SupportsContextSwitching) driver).context(desiredContext);
     }
@@ -58,7 +64,7 @@ public class MobileContextUtils implements IDriverPool {
 
         WEB_BROWSER("CHROMIUM");
 
-        String viewName;
+        private final String viewName;
 
         View(String viewName) {
             this.viewName = viewName;

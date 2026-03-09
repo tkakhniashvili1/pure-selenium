@@ -80,16 +80,19 @@ public abstract class CartPageBase extends BasePage {
 
             item.increaseQuantity();
 
+            final CartItemComponent[] refreshedHolder = new CartItemComponent[1];
             waitUntil(d -> {
                 CartItemComponent refreshed = getFirstCartItem();
+                refreshedHolder[0] = refreshed;
                 return refreshed != null && refreshed.getQuantity() > before;
             }, getDefaultWaitTimeout());
 
-            CartItemComponent refreshed = getFirstCartItem();
-            if (refreshed == null) {
+            item = refreshedHolder[0];
+            if (item == null) {
                 throw new NoSuchElementException("Cart item not found");
             }
-            currentQuantity = refreshed.getQuantity();
+
+            currentQuantity = item.getQuantity();
 
             attempts++;
         }
@@ -123,7 +126,7 @@ public abstract class CartPageBase extends BasePage {
         return emptyCartMessage.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC);
     }
 
-    public int cartCountElement() {
+    public int getCartItemsCount() {
         if (!cartCount.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC)) return 0;
         return parseIntegerFromText(cartCount.getText());
     }

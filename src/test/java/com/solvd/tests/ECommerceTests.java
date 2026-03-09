@@ -6,6 +6,7 @@ import com.solvd.pages.common.ProductPageBase;
 import com.solvd.pages.common.SearchResultsPageBase;
 import com.zebrunner.carina.core.AbstractTest;
 import com.zebrunner.carina.utils.R;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -41,7 +42,7 @@ public class ECommerceTests extends AbstractTest {
 
         SearchResultsPageBase resultsPage = homePage.search(query);
 
-        softly.assertTrue(resultsPage.isPageOpened(), "Results page not displayed.");
+        Assert.assertTrue(resultsPage.isPageOpened(), "Results page not displayed.");
 
         int count = resultsPage.getVisibleProductCardCount();
 
@@ -59,7 +60,7 @@ public class ECommerceTests extends AbstractTest {
         String query = "wkjnefjnfinerifgnrenfgjnrbvbvbvbvbvbvbbvbvbvbvbbvbvbv";
         SearchResultsPageBase resultsPage = homePage.search(query);
 
-        softly.assertTrue(resultsPage.isPageOpened(), "Results page not displayed.");
+        Assert.assertTrue(resultsPage.isPageOpened(), "Results page not displayed.");
         softly.assertTrue(resultsPage.isNoMatchesMessageDisplayed(), "No matches message should be displayed.");
         softly.assertEquals(resultsPage.getVisibleProductCardCount(), 0,
                 "Displayed product cards should be 0 for a no-results search.");
@@ -73,7 +74,7 @@ public class ECommerceTests extends AbstractTest {
         String query = homePage.getSearchKeywordFromHome();
 
         SearchResultsPageBase resultsPage = homePage.search(query);
-        softly.assertTrue(resultsPage.isPageOpened(), "Results page not displayed.");
+        Assert.assertTrue(resultsPage.isPageOpened(), "Results page not displayed.");
         softly.assertTrue(resultsPage.getVisibleProductCardCount() > 0,
                 "Search should return at least 1 product.");
 
@@ -108,7 +109,7 @@ public class ECommerceTests extends AbstractTest {
         productPage.selectRequiredOptionsIfPresent();
         productPage.addProductToCart();
 
-        softly.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
+        Assert.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
         softly.assertTrue(productPage.getModalItemsCount() > 0, "Modal cart items count should be > 0.");
 
         softly.assertEquals(
@@ -131,10 +132,10 @@ public class ECommerceTests extends AbstractTest {
         productPage.selectRequiredOptionsIfPresent();
         productPage.addProductToCart();
 
-        softly.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
+        Assert.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
 
         CartPageBase cartPage = productPage.openCartFromModal();
-        softly.assertTrue(cartPage.isPageOpened(), "Cart page not displayed (cart lines not visible).");
+        Assert.assertTrue(cartPage.isPageOpened(), "Cart page not displayed (cart lines not visible).");
 
         BigDecimal subtotal1 = cartPage.getProductsSubtotal();
         BigDecimal total1 = cartPage.getTotal();
@@ -161,18 +162,18 @@ public class ECommerceTests extends AbstractTest {
         productPage.selectRequiredOptionsIfPresent();
         productPage.addProductToCart();
 
-        softly.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
+        Assert.assertTrue(productPage.isAddToCartModalDisplayed(), "Add-to-cart modal not displayed.");
 
         CartPageBase cartPage = productPage.openCartFromModal();
 
-        softly.assertTrue(cartPage.isPageOpened(), "Cart page not displayed.");
+        Assert.assertTrue(cartPage.isPageOpened(), "Cart page not displayed.");
         softly.assertTrue(cartPage.getCartLinesCount() > 0, "Cart should have at least 1 product line.");
 
         cartPage.removeFirstLine();
 
         softly.assertEquals(cartPage.getCartLinesCount(), 0, "Product line should be removed from the cart.");
         softly.assertTrue(cartPage.isEmptyCartMessageDisplayed(), "Empty cart message should be displayed.");
-        softly.assertEquals(cartPage.cartCountElement(), 0, "Cart quantity indicator should be 0.");
+        softly.assertEquals(cartPage.getCartItemsCount(), 0, "Cart quantity indicator should be 0.");
 
         softly.assertAll();
     }

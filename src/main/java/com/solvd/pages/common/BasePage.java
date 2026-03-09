@@ -1,5 +1,6 @@
 package com.solvd.pages.common;
 
+import com.solvd.utils.TimeConstants;
 import com.zebrunner.carina.utils.config.Configuration;
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
 import com.zebrunner.carina.webdriver.gui.AbstractPage;
@@ -22,28 +23,13 @@ public abstract class BasePage extends AbstractPage {
         super(driver);
     }
 
-    protected void ensureFrontOfficeIframe(ExtendedWebElement probeElement) {
-        WebDriver driver = getDriver();
-        openBaseUrlIfNeeded(driver);
+    protected final void ensureFrontOfficeIframe(ExtendedWebElement probeElement) {
+        if (probeElement != null && probeElement.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC)) {
+            return;
+        }
+
         driver.switchTo().defaultContent();
-
-        long timeout = getDefaultWaitTimeout().getSeconds();
-
-        waitUntil(d -> {
-            if (isAnyElementDisplayed(probeElement)) return true;
-
-            if (frontOfficeIframe.isPresent()) {
-                try {
-                    d.switchTo().frame(frontOfficeIframe.getElement());
-                    return isAnyElementDisplayed(probeElement);
-                } catch (StaleElementReferenceException e) {
-                    d.switchTo().defaultContent();
-                    return false;
-                }
-            }
-
-            return false;
-        }, timeout);
+        driver.switchTo().frame("frontOfficeFrame");
     }
 
     private void openBaseUrlIfNeeded(WebDriver driver) {
