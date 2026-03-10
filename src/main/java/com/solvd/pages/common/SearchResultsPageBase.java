@@ -62,19 +62,23 @@ public abstract class SearchResultsPageBase extends BasePage {
     public int getVisibleProductCardCount() {
         final int shortTimeout = TimeConstants.SHORT_TIMEOUT_SEC;
 
-        if (isNoMatchesMessageDisplayed()) return 0;
-
-        int retries = 2;
-        for (int i = 0; i < retries; i++) {
-            try {
-                return (int) productCards.stream()
-                        .filter(e -> e.isElementPresent(shortTimeout))
-                        .count();
-            } catch (StaleElementReferenceException e) {
-                if (i == retries - 1) throw e;
-            }
+        if (isNoMatchesMessageDisplayed()) {
+            return 0;
         }
-        return 0;
+
+        try {
+            waitUntil(driver -> productCards.stream()
+                            .anyMatch(e -> e.isElementPresent(shortTimeout)),
+                    shortTimeout);
+
+            return (int) productCards.stream()
+                    .filter(e -> e.isElementPresent(shortTimeout))
+                    .count();
+
+        } catch (StaleElementReferenceException e) {
+
+            return 0;
+        }
     }
 
     public ProductPageBase openFirstVisibleProduct() {

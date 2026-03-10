@@ -1,6 +1,7 @@
 package com.solvd.pages.common;
 
 import com.solvd.components.CartItemComponent;
+import com.solvd.utils.ParseUtils;
 import com.solvd.utils.TimeConstants;
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
 import org.openqa.selenium.NoSuchElementException;
@@ -79,16 +80,19 @@ public abstract class CartPageBase extends BasePage {
 
             item.increaseQuantity();
 
+            final CartItemComponent[] refreshedHolder = new CartItemComponent[1];
             waitUntil(d -> {
                 CartItemComponent refreshed = getFirstCartItem();
+                refreshedHolder[0] = refreshed;
                 return refreshed != null && refreshed.getQuantity() > before;
             }, getDefaultWaitTimeout());
 
-            CartItemComponent refreshed = getFirstCartItem();
-            if (refreshed == null) {
+            item = refreshedHolder[0];
+            if (item == null) {
                 throw new NoSuchElementException("Cart item not found");
             }
-            currentQuantity = refreshed.getQuantity();
+
+            currentQuantity = item.getQuantity();
 
             attempts++;
         }
@@ -112,7 +116,7 @@ public abstract class CartPageBase extends BasePage {
 
         int before = cartItems.size();
 
-        cartItems.get(0).clickRemoveButton();
+        cartItems.get(0).click();
 
         waitUntil(d -> isEmptyCartMessageDisplayed() || cartItems.size() < before,
                 getDefaultWaitTimeout());
@@ -122,7 +126,7 @@ public abstract class CartPageBase extends BasePage {
         return emptyCartMessage.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC);
     }
 
-    public int cartCountElement() {
+    public int getCartItemsCount() {
         if (!cartCount.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC)) return 0;
         return parseIntegerFromText(cartCount.getText());
     }
@@ -145,7 +149,7 @@ public abstract class CartPageBase extends BasePage {
 
     private BigDecimal parseMoney(ExtendedWebElement element) {
         waitUntil(d -> isMoneyValuePresent(element), getDefaultWaitTimeout());
-        return com.solvd.utils.ParseUtils.parseMoney(
+        return ParseUtils.parseMoney(
                 element.getAttribute(ATTRIBUTE_TEXT_CONTENT)
         );
     }
