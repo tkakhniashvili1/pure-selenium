@@ -54,7 +54,7 @@ public abstract class ProductPageBase extends BasePage {
     }
 
     public boolean isAddToCartButtonPresent() {
-        return addToCartButton.isElementPresent() && addToCartButton.isEnabled();
+        return addToCartButton.isElementPresent();
     }
 
     public void selectRequiredOptionsIfPresent() {

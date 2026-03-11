@@ -1,5 +1,6 @@
 package com.solvd.pages.common;
 
+import com.solvd.utils.TimeConstants;
 import com.zebrunner.carina.utils.config.Configuration;
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
 import com.zebrunner.carina.webdriver.gui.AbstractPage;
@@ -71,7 +72,7 @@ public abstract class BasePage extends AbstractPage {
     }
 
     protected final void ensureFrontOfficeIframeOnce(ExtendedWebElement probeElement) {
-        if (frontOfficeIframeEnsured && probeElement != null && probeElement.isElementPresent(1)) {
+        if (frontOfficeIframeEnsured && probeElement != null && probeElement.isElementPresent(TimeConstants.SHORT_TIMEOUT_SEC)) {
             return;
         }
 

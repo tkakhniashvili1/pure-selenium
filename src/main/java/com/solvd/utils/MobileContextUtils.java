@@ -58,7 +58,7 @@ public class MobileContextUtils implements IDriverPool {
 
         WEB_BROWSER("CHROMIUM");
 
-        String viewName;
+        private final String viewName;
 
         View(String viewName) {
             this.viewName = viewName;

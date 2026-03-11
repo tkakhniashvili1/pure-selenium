@@ -6,19 +6,21 @@ import com.solvd.pages.common.ProductPageBase;
 import com.solvd.pages.common.SearchResultsPageBase;
 import com.zebrunner.carina.core.AbstractTest;
 import com.zebrunner.carina.utils.R;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
-import com.solvd.pages.android.HomePage;
 
 import java.math.BigDecimal;
-import java.util.Set;
 
 import static com.solvd.utils.TextUtils.normalizeText;
 
 public class ECommerceTests extends AbstractTest {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ECommerceTests.class);
 
     private SoftAssert softly;
 
@@ -47,7 +49,8 @@ public class ECommerceTests extends AbstractTest {
         int count = resultsPage.getVisibleProductCardCount();
 
         softly.assertTrue(count > 0, "Number of displayed product cards should be > 0");
-        resultsPage.getVisibleProductTitles().forEach(System.out::println);
+        resultsPage.getVisibleProductTitles()
+                .forEach(title -> LOGGER.info("Displayed product title: {}", title));
         softly.assertTrue(resultsPage.hasAnyProductTitleContaining(query), "At least one product title should contain '" + query);
 
         softly.assertAll();
