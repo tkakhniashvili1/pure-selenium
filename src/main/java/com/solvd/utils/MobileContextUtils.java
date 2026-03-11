@@ -32,28 +32,22 @@ public class MobileContextUtils implements IDriverPool {
         WebDriver driver = getPureDriver(getDriver());
         DriverHelper help = new DriverHelper();
         Set<String> contextHandles = help.performIgnoreException(((ContextAware) driver)::getContextHandles);
-        String desiredContext = null;
+        String desiredContext = "";
+        boolean isContextPresent = false;
         LOGGER.info("Existing contexts: ");
-
         for (String cont : contextHandles) {
+            if (cont.contains(context.getView())) {
+                if (exclude != null && cont.contains(exclude.getView())) {
+                    continue;
+                }
+                desiredContext = cont;
+                isContextPresent = true;
+            }
             LOGGER.info(cont);
-
-            if (!cont.contains(context.getView())) {
-                continue;
-            }
-
-            if (exclude != null && cont.contains(exclude.getView())) {
-                continue;
-            }
-
-            desiredContext = cont;
-            break;
         }
-
-        if (desiredContext == null) {
+        if (!isContextPresent) {
             throw new NotFoundException("Desired context is not present");
         }
-
         LOGGER.info("Switching to context : " + desiredContext);
         ((SupportsContextSwitching) driver).context(desiredContext);
     }

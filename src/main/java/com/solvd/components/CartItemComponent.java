@@ -2,6 +2,7 @@ package com.solvd.components;
 
 import com.zebrunner.carina.webdriver.decorator.ExtendedWebElement;
 import com.zebrunner.carina.webdriver.gui.AbstractUIObject;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.SearchContext;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.FindBy;
@@ -30,8 +31,19 @@ public class CartItemComponent extends AbstractUIObject {
         return removeButton.isElementPresent();
     }
 
+    public String title() {
+        return productTitle.getText().trim();
+    }
+
     public void increaseQuantity() {
         plusButton.click();
+    }
+
+    public void clickRemoveButton() {
+        if (!removeButton.isClickable()) {
+            throw new NoSuchElementException("Remove button not clickable");
+        }
+        removeButton.click();
     }
 
     public int getQuantity() {
